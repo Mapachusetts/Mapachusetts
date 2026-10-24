@@ -1,5 +1,9 @@
+import type { CandidateProfile } from "@/lib/types";
+
 /**
- * candidates.js — Candidate data store for Mapachusetts
+ * Hand-curated candidate research profiles (from the candidate-search branch).
+ * Each profile is keyed by `slug`, matching `politicians.slug` in Supabase;
+ * lib/candidates.ts merges the two. Profiles without a Supabase row still appear.
  *
  * Sub-issue shape:
  *   id, label
@@ -21,13 +25,13 @@
  *   Ballotpedia     — career + biography
  */
 
-const CANDIDATES = [
+export const CANDIDATE_PROFILES: CandidateProfile[] = [
 
   /* ════════════════════════════════════════════
      ELIZABETH WARREN
   ════════════════════════════════════════════ */
   {
-    id: "warren",
+    slug: "elizabeth-warren",
     name: "Elizabeth Warren",
     role: "U.S. Senator, Massachusetts",
     party: "Democrat",
@@ -884,7 +888,7 @@ const CANDIDATES = [
      ED MARKEY
   ════════════════════════════════════════════ */
   {
-    id: "markey",
+    slug: "ed-markey",
     name: "Ed Markey",
     role: "U.S. Senator, Massachusetts",
     party: "Democrat",
