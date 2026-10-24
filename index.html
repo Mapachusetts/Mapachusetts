@@ -143,11 +143,15 @@
         <button class="tab" id="tabEvents" type="button" role="tab" aria-selected="false" aria-controls="eventsList" tabindex="-1">
           <span aria-hidden="true">📅</span> Events <span class="count" id="eventsCount">0</span>
         </button>
+        <button class="tab" id="tabCandidate" type="button" role="tab" aria-selected="false" aria-controls="candidateList" tabindex="-1" hidden>
+          <span aria-hidden="true">👤</span> Candidate
+        </button>
       </div>
 
       <div class="tab-scroll">
         <div id="ballotList" role="tabpanel" aria-labelledby="tabBallot" tabindex="0"></div>
         <div id="eventsList" role="tabpanel" aria-labelledby="tabEvents" tabindex="0" hidden></div>
+        <div id="candidateList" role="tabpanel" aria-labelledby="tabCandidate" tabindex="0" hidden></div>
       </div>
 
       <footer class="dossier-foot">

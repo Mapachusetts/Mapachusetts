@@ -111,10 +111,12 @@ const ui = new UI(
     countdown: $("countdown"),
     tabBallot: $("tabBallot"),
     tabEvents: $("tabEvents"),
+    tabCandidate: $("tabCandidate"),
     ballotCount: $("ballotCount"),
     eventsCount: $("eventsCount"),
     ballotList: $("ballotList"),
     eventsList: $("eventsList"),
+    candidateList: $("candidateList"),
     status: $("status"),
   },
   {
@@ -139,14 +141,31 @@ const ui = new UI(
     onSelectLayer: (id) => focusLayer(id),
     onHoverLayer: (id) => globe.setHover(id),
     // A candidate on a race card was clicked.
-    onOpenCandidate: (slug) => sheet.open(slug),
+    onOpenCandidate: (slug) => openCandidate(slug),
   }
 );
 ui.setTheme(theme);
 ui.showTab("ballot");
 
-// The candidate profile sheet. It slides over the dossier.
+// The candidate sheet instance is reused for its renderers; we render its
+// content INTO the dossier's "Candidate" tab instead of the slide-over.
 const sheet = new CandidateSheet($("candidateSheet"));
+
+// Show a candidate in the dossier's Candidate tab (Option B: a third tab
+// alongside Ballot and Events), like a region's info shows in the same panel.
+function openCandidate(slug, { focus = true } = {}) {
+  let ok = true;
+  ui.showCandidateTab(
+    (container) => {
+      ok = sheet.renderInto(container, slug) !== false;
+    },
+    { focus }
+  );
+  if (!ok) {
+    ui.hideCandidateTab();
+    ui.setStatus("We don't have a research profile for that candidate yet.", "warn", 4000);
+  }
+}
 
 const search = new SearchBox(
   {
@@ -157,7 +176,7 @@ const search = new SearchBox(
   },
   {
     onSelect: (desc) => goToDescriptor(desc),
-    onSelectCandidate: (slug) => sheet.open(slug),
+    onSelectCandidate: (slug) => openCandidate(slug),
   }
 );
 
@@ -483,7 +502,7 @@ locateBtn.addEventListener("click", locateMe);
 document.addEventListener("click", (e) => {
   const cand = e.target.closest("[data-candidate]");
   if (cand) {
-    sheet.open(cand.dataset.candidate);
+    openCandidate(cand.dataset.candidate);
     return;
   }
   const jump = e.target.closest("[data-jump]");
@@ -530,7 +549,7 @@ document.addEventListener("keydown", (e) => {
 
 // Deep link: /?candidate=maura-healey
 const deepLinked = new URLSearchParams(window.location.search).get("candidate");
-if (deepLinked) sheet.open(deepLinked, { focus: false });
+if (deepLinked) openCandidate(deepLinked, { focus: false });
 
 // Opening / closing the Browse panel changes how much of the map is covered.
 $("navigator").addEventListener("toggle", applyPadding);

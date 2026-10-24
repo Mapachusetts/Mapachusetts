@@ -39,13 +39,26 @@ export class UI {
 
     refs.tabBallot.addEventListener("click", () => this.showTab("ballot"));
     refs.tabEvents.addEventListener("click", () => this.showTab("events"));
-    // Arrow keys move between tabs (standard tab pattern).
-    for (const tab of [refs.tabBallot, refs.tabEvents]) {
+    if (refs.tabCandidate) {
+      refs.tabCandidate.addEventListener("click", () => this.showTab("candidate"));
+    }
+    // Arrow keys move between the visible tabs (standard tab pattern).
+    const tabCycle = () =>
+      ["ballot", "events", refs.tabCandidate && !refs.tabCandidate.hidden ? "candidate" : null].filter(
+        Boolean
+      );
+    const tabEl = { ballot: refs.tabBallot, events: refs.tabEvents, candidate: refs.tabCandidate };
+    for (const name of ["ballot", "events", "candidate"]) {
+      const tab = tabEl[name];
+      if (!tab) continue;
       tab.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-          const next = tab === refs.tabBallot ? "events" : "ballot";
+          const order = tabCycle();
+          const i = order.indexOf(name);
+          const delta = e.key === "ArrowRight" ? 1 : -1;
+          const next = order[(i + delta + order.length) % order.length];
           this.showTab(next);
-          (next === "ballot" ? refs.tabBallot : refs.tabEvents).focus();
+          tabEl[next].focus();
         }
       });
     }
@@ -202,13 +215,41 @@ export class UI {
   }
 
   showTab(which) {
-    const ballot = which === "ballot";
-    this.refs.tabBallot.setAttribute("aria-selected", String(ballot));
-    this.refs.tabEvents.setAttribute("aria-selected", String(!ballot));
-    this.refs.tabBallot.tabIndex = ballot ? 0 : -1;
-    this.refs.tabEvents.tabIndex = ballot ? -1 : 0;
-    this.refs.ballotList.hidden = !ballot;
-    this.refs.eventsList.hidden = ballot;
+    const map = {
+      ballot: { tab: this.refs.tabBallot, panel: this.refs.ballotList },
+      events: { tab: this.refs.tabEvents, panel: this.refs.eventsList },
+      candidate: { tab: this.refs.tabCandidate, panel: this.refs.candidateList },
+    };
+    for (const [name, { tab, panel }] of Object.entries(map)) {
+      if (!tab || !panel) continue;
+      const active = name === which;
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
+      panel.hidden = !active;
+    }
+  }
+
+  // ===== Candidate tab ==========================================================
+
+  /**
+   * Show (and optionally focus) the Candidate tab. `render` is a callback that
+   * fills the panel — the app passes the candidate sheet's renderInto().
+   */
+  showCandidateTab(render, { focus = true } = {}) {
+    if (!this.refs.tabCandidate || !this.refs.candidateList) return;
+    this.refs.tabCandidate.hidden = false;
+    render(this.refs.candidateList);
+    this.showTab("candidate");
+    if (focus) this.refs.tabCandidate.focus({ preventScroll: true });
+  }
+
+  // Hide and clear the Candidate tab (e.g. when moving to a new place).
+  hideCandidateTab() {
+    if (!this.refs.tabCandidate || !this.refs.candidateList) return;
+    const wasActive = this.refs.tabCandidate.getAttribute("aria-selected") === "true";
+    this.refs.tabCandidate.hidden = true;
+    this.refs.candidateList.replaceChildren();
+    if (wasActive) this.showTab("ballot");
   }
 
   // ===== The layer dock =========================================================

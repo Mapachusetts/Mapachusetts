@@ -169,6 +169,89 @@ export class CandidateSheet {
     this.handlers.onClose?.();
   }
 
+  /**
+   * Render the candidate research INTO a given container (the dossier's
+   * "Candidate" tab panel) instead of the slide-over sheet. Reuses all the same
+   * section renderers, so the research looks identical — it just lives inside
+   * the dossier like Ballot and Events do. Returns false if no data for slug.
+   */
+  renderInto(container, slug) {
+    const c = getCandidate(slug);
+    if (!c) return false;
+    this.slug = slug;
+    this.tab = defaultTab(c);
+
+    const panels = {
+      news: () => this._news(c.news),
+      funding: () => this._funding(c.funding),
+      career: () => this._career(c),
+      opinions: () => this._issues(c.opinions),
+      sources: () => this._sources(c.sources, c.news),
+      misconceptions: () => this._myths(c.misconceptions),
+    };
+
+    // Sub-navigation across the six research sections (same pattern as the
+    // slide-over, scoped to this container so ids don't collide).
+    const setSub = (id) => {
+      this.tab = id;
+      for (const t of TABS) {
+        const active = t.id === id;
+        const btn = container.querySelector(`#csin-tab-${t.id}`);
+        const panel = container.querySelector(`#csin-panel-${t.id}`);
+        if (!btn || !panel) continue;
+        btn.setAttribute("aria-selected", String(active));
+        btn.tabIndex = active ? 0 : -1;
+        panel.hidden = !active;
+      }
+    };
+
+    const tabs = h(
+      "div",
+      { class: "cs-tabs", role: "tablist", "aria-label": "Candidate information" },
+      TABS.map((t) =>
+        h(
+          "button",
+          {
+            class: "cs-tab",
+            type: "button",
+            id: `csin-tab-${t.id}`,
+            role: "tab",
+            "aria-selected": String(t.id === this.tab),
+            "aria-controls": `csin-panel-${t.id}`,
+            tabindex: t.id === this.tab ? "0" : "-1",
+            onclick: () => setSub(t.id),
+          },
+          h("span", { "aria-hidden": "true" }, t.icon),
+          " ",
+          t.label
+        )
+      )
+    );
+
+    const body = h(
+      "div",
+      { class: "cs-scroll cs-inline-scroll" },
+      TABS.map((t) =>
+        h(
+          "div",
+          {
+            class: "cs-panel",
+            id: `csin-panel-${t.id}`,
+            role: "tabpanel",
+            "aria-labelledby": `csin-tab-${t.id}`,
+            tabindex: "0",
+            hidden: t.id !== this.tab,
+          },
+          panels[t.id]()
+        )
+      )
+    );
+
+    container.replaceChildren(this._header(c), tabs, body);
+    this._setUrl(slug);
+    return true;
+  }
+
   // Make the profile shareable (?candidate=slug) without navigating.
   _setUrl(slug) {
     try {
