@@ -1,65 +1,65 @@
 import type { Metadata } from "next";
 import { getArticles } from "@/lib/articles";
+import { formatDate } from "@/lib/format";
 import type { Article } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "News — Mapachusetts",
-  description: "Latest political news headlines, newest first.",
+  description: "Latest Massachusetts political news headlines, newest first.",
 };
 
-/** Format an RSS pubDate (or ISO string) for display; fall back to raw text. */
-function formatDate(value: string | null): string | null {
-  if (!value) return null;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+/** Newest first by publish date, falling back to when we stored it. */
+function sortTime(a: Article): number {
+  const published = a.published_at ? Date.parse(a.published_at) : Number.NaN;
+  return Number.isNaN(published) ? Date.parse(a.created_at) : published;
 }
 
 export default async function NewsPage() {
   // If the table isn't reachable yet, show an empty state instead of crashing.
   let articles: Article[];
   try {
-    articles = await getArticles(50);
+    articles = await getArticles(100);
   } catch {
     articles = [];
   }
+  articles.sort((a, b) => sortTime(b) - sortTime(a));
 
   return (
-    <div className="container">
-      <h1 className="section-title">Latest Political News</h1>
+    <section className="section">
+      <h2>Latest Political News</h2>
+      <p className="section-subtitle">
+        Headlines behind our candidate summaries. Links open the original
+        reporting.
+      </p>
 
       {articles.length === 0 ? (
-        <p className="empty">
+        <p className="tab-empty">
           No articles yet. Run <code>npm run ingest</code> to pull in headlines.
         </p>
       ) : (
-        <div className="news-list">
-          {articles.map((a) => {
-            const date = formatDate(a.published_at);
-            return (
+        <ul className="news-list">
+          {articles.map((a) => (
+            <li key={a.id}>
               <a
-                key={a.id}
                 href={a.url}
                 className="news-item"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <h3>{a.title}</h3>
-                <div className="meta">
-                  {[a.source, date].filter(Boolean).join(" · ")}
+                <div className="news-meta">
+                  {[a.source, formatDate(a.published_at)]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </div>
                 {a.snippet && <p className="news-snippet">{a.snippet}</p>}
               </a>
-            );
-          })}
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
+    </section>
   );
 }

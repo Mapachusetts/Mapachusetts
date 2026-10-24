@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mapachusetts — Politician Career Histories",
-  description: "Search politicians and view their career history.",
+  title: "Mapachusetts — Know Your Candidates",
+  description:
+    "Research Massachusetts candidates: cited news summaries, funding, issue positions, and career history.",
 };
 
 export default function RootLayout({
@@ -13,21 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <header className="navbar">
-          <div className="navbar-container">
-            <Link href="/" className="navbar-brand">
-              Mapachusetts
-            </Link>
-            <nav className="navbar-links">
-              <Link href="/">Search</Link>
-              <Link href="/news">News</Link>
-              <Link href="/about">About</Link>
-            </nav>
-          </div>
-        </header>
+        <Navbar />
         <main>{children}</main>
+        <footer className="footer">
+          <p>&copy; 2026 Mapachusetts. Built for civic transparency.</p>
+        </footer>
       </body>
     </html>
   );

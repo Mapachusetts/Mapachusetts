@@ -14,23 +14,16 @@ export async function getArticles(limit = 50): Promise<Article[]> {
   return (data ?? []) as Article[];
 }
 
-/** Fetch the cached AI news summary for one politician, or null if none. */
-export async function getNewsSummary(
-  politicianId: string
-): Promise<PoliticianNewsSummary | null> {
+/** All cached AI news summaries (at most one per politician). */
+export async function getNewsSummaries(): Promise<PoliticianNewsSummary[]> {
   const supabase = createServerClient();
   const { data, error } = await supabase
     .from("politician_news_summaries")
-    .select("*")
-    .eq("politician_id", politicianId)
-    .maybeSingle();
+    .select("*");
 
   if (error) throw error;
-  if (!data) return null;
-
-  const row = data as PoliticianNewsSummary;
-  return {
+  return ((data ?? []) as PoliticianNewsSummary[]).map((row) => ({
     ...row,
     citations: Array.isArray(row.citations) ? row.citations : [],
-  };
+  }));
 }

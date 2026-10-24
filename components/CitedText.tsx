@@ -2,12 +2,13 @@ import type { ReactNode } from "react";
 
 /**
  * Parse text containing inline [n] markers into React nodes, turning markers
- * whose number is in `validNumbers` into superscript links to #cite-n.
- * Unknown markers are left as plain text. Pure; keys are position-based.
+ * whose number is in `validNumbers` into superscript links to
+ * `#${anchorPrefix}${n}`. Unknown markers are left as plain text.
  */
 export function parseCitedText(
   text: string,
   validNumbers: ReadonlySet<number>,
+  anchorPrefix: string,
   keyPrefix = ""
 ): ReactNode[] {
   const nodes: ReactNode[] = [];
@@ -24,7 +25,11 @@ export function parseCitedText(
     }
     nodes.push(
       <sup key={`${keyPrefix}ref-${match.index}`}>
-        <a href={`#cite-${n}`} className="cite-ref" aria-label={`Source ${n}`}>
+        <a
+          href={`#${anchorPrefix}${n}`}
+          className="cite-ref"
+          aria-label={`Source ${n}`}
+        >
           [{n}]
         </a>
       </sup>
@@ -40,9 +45,11 @@ export function parseCitedText(
 export default function CitedText({
   text,
   validNumbers,
+  anchorPrefix = "cite-",
 }: {
   text: string;
   validNumbers: ReadonlySet<number>;
+  anchorPrefix?: string;
 }) {
   const paragraphs = text
     .split(/\n\s*\n/)
@@ -52,7 +59,9 @@ export default function CitedText({
   return (
     <div className="news-summary">
       {paragraphs.map((p, i) => (
-        <p key={`p-${i}`}>{parseCitedText(p, validNumbers, `p${i}-`)}</p>
+        <p key={`p-${i}`}>
+          {parseCitedText(p, validNumbers, anchorPrefix, `p${i}-`)}
+        </p>
       ))}
     </div>
   );

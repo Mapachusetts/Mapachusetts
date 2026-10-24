@@ -51,3 +51,121 @@ export interface PoliticianNewsSummary {
   model: string | null;
   generated_at: string;
 }
+
+// ── Candidate research profiles (interface from the candidate-search branch) ──
+
+/** One industry/PAC line in the Funding tab bar chart. */
+export interface FundingSource {
+  label: string;
+  /** Dollars. */
+  amount: number;
+  /** Share of top contributions, 0–100. */
+  pct: number;
+}
+
+export interface Funding {
+  total: string;
+  topIndustry: string;
+  smallDonorPct: string;
+  plainEnglish?: string;
+  whyItMatters?: string;
+  sources: FundingSource[];
+  foreignSources: FundingSource[];
+}
+
+/** A role as displayed in the Career tab (most recent first). */
+export interface ProfileCareerEntry {
+  years: string;
+  title: string;
+  org: string;
+  description: string;
+}
+
+export interface VoteRecordEntry {
+  bill: string;
+  year: number;
+  vote: string;
+}
+
+export interface SubIssue {
+  id: string;
+  label: string;
+  plainEnglish?: string;
+  whyItMatters?: string;
+  /** 0–100 support level (0–20 strongly opposed … 80–100 strongly supports). */
+  alignment?: number;
+  stance?: string;
+  detail: string;
+  voteRecord?: VoteRecordEntry[];
+}
+
+export interface IssueTopic {
+  id: string;
+  topic: string;
+  icon: string;
+  subIssues: SubIssue[];
+}
+
+export type SourceBias =
+  | "left"
+  | "center-left"
+  | "center"
+  | "center-right"
+  | "right"
+  | "nonpartisan";
+
+export type SourceType =
+  | "government"
+  | "factcheck"
+  | "newspaper"
+  | "nonprofit"
+  | "academic"
+  | "wire";
+
+export interface ResearchSource {
+  name: string;
+  url: string;
+  bias: SourceBias;
+  type: SourceType;
+  description: string;
+}
+
+export interface Misconception {
+  category: string;
+  myth: string;
+  mythSourceLabel?: string;
+  mythSourceUrl?: string;
+  reality: string;
+  sourceLabel: string;
+  sourceUrl: string;
+}
+
+/** Hand-curated research profile, keyed by the politician's slug. */
+export interface CandidateProfile {
+  slug: string;
+  name: string;
+  role: string;
+  party: string;
+  openSecretsUrl?: string;
+  funding?: Funding;
+  career?: ProfileCareerEntry[];
+  opinions?: IssueTopic[];
+  sources?: ResearchSource[];
+  misconceptions?: Misconception[];
+}
+
+/** Everything the research UI shows for one candidate (Supabase + curated profile). */
+export interface CandidateView {
+  slug: string;
+  name: string;
+  role: string;
+  party: string;
+  bio: string | null;
+  openSecretsUrl: string | null;
+  career: ProfileCareerEntry[];
+  funding: Funding | null;
+  opinions: IssueTopic[];
+  sources: ResearchSource[];
+  misconceptions: Misconception[];
+  news: PoliticianNewsSummary | null;
+}
