@@ -1,4 +1,5 @@
 import CandidateResearch from "@/components/CandidateResearch";
+import ExploreClient from "@/components/ExploreClient";
 import { getCandidates } from "@/lib/candidates";
 
 export const dynamic = "force-dynamic";
@@ -13,21 +14,24 @@ export default async function HomePage({
 
   return (
     <>
-      <section id="home" className="hero">
-        <h1>Know Your Candidates</h1>
-        <p>
-          Search any Massachusetts candidate to see their recent news coverage,
-          funding, issue positions, and career history — all in one place.
-        </p>
-        <a href="#research" className="btn">
-          Start Researching
-        </a>
+      {/* ── GLOBE HERO ── the main experience: spin the globe, drill down ── */}
+      <section id="home" className="globe-hero">
+        <div className="globe-hero-intro">
+          <h1>Mapachusetts</h1>
+          <p>
+            Spin the globe, drill into the United States, and zoom down to your
+            state, county, and city to see the elections, candidates, and civic
+            events that affect you.
+          </p>
+        </div>
+        <ExploreClient />
       </section>
 
       <section id="research" className="section research-section">
         <h2>Candidate Research</h2>
         <p className="section-subtitle">
-          Search a candidate by name, office, or party to explore their record.
+          Search a candidate by name, office, or party to explore their funding,
+          issue positions, career history, and recent news coverage.
         </p>
         <CandidateResearch candidates={candidates} initialSlug={candidate ?? null} />
       </section>

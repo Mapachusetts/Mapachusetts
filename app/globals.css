@@ -2304,3 +2304,58 @@ section[id] { scroll-margin-top: var(--nav-height); }
     max-height: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBE HERO — the globe as the landing experience
+═══════════════════════════════════════════════════════════════════ */
+.globe-hero {
+  background: linear-gradient(180deg, #0b1120 0%, #111827 100%);
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.globe-hero-intro {
+  max-width: 820px;
+  margin: 0 auto 1.75rem;
+  text-align: center;
+  color: #fff;
+}
+
+.globe-hero-intro h1 {
+  font-size: 2.6rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.6rem;
+}
+
+.globe-hero-intro p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+/* In the hero, give the globe real presence and let it fill the width. */
+.globe-hero .globe-explorer {
+  max-width: 1240px;
+  margin: 0 auto;
+  border-color: #1f2937;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.globe-hero .globe-body {
+  min-height: 640px;
+}
+
+.globe-hero .globe-map,
+.globe-hero .globe-loading {
+  min-height: 640px;
+}
+
+@media (max-width: 860px) {
+  .globe-hero-intro h1 {
+    font-size: 2rem;
+  }
+  .globe-hero .globe-body,
+  .globe-hero .globe-map,
+  .globe-hero .globe-loading {
+    min-height: 460px;
+  }
+}
