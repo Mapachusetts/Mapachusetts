@@ -452,8 +452,16 @@ function ProfileHeader({ c }: { c: CandidateView }) {
   const openSecrets = safeUrl(c.openSecretsUrl);
   return (
     <div className="profile-header">
-      <div className="profile-avatar" data-party={party} aria-hidden="true">
-        {initials(c.name)}
+      <div
+        className={`profile-avatar${c.photo ? " has-photo" : ""}`}
+        data-party={party}
+        aria-hidden="true"
+      >
+        {c.photo ? (
+          <img src={c.photo} alt={`Official photo of ${c.name}`} />
+        ) : (
+          initials(c.name)
+        )}
       </div>
       <div className="profile-meta">
         <h3>{c.name}</h3>

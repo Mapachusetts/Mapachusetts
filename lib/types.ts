@@ -146,6 +146,8 @@ export interface CandidateProfile {
   name: string;
   role: string;
   party: string;
+  /** Official public-domain headshot URL (e.g. congressional bioguide). */
+  photo?: string;
   openSecretsUrl?: string;
   funding?: Funding;
   career?: ProfileCareerEntry[];
@@ -160,6 +162,7 @@ export interface CandidateView {
   name: string;
   role: string;
   party: string;
+  photo: string | null;
   bio: string | null;
   openSecretsUrl: string | null;
   career: ProfileCareerEntry[];
