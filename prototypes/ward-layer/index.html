@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapachusetts — Municipal Ward Map</title>
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="navbar">
+    <div class="navbar-container">
+      <a href="#" class="navbar-brand">Mapachusetts</a>
+
+      <div class="navbar-controls">
+        <label class="scope-control">
+          <span>Go to</span>
+          <select id="scopeSelect">
+            <option value="MA" selected>Massachusetts (Boston wards)</option>
+            <option value="US">United States (zoom in)</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="map"></div>
+
+    <div class="map-infobox" id="infoBox">
+      <span class="map-infobox-label">Hovered ward</span>
+      <span class="map-infobox-value" id="hoverName">—</span>
+      <span class="map-infobox-meta" id="hoverMeta"></span>
+    </div>
+
+    <div class="map-hint" id="mapHint"></div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
