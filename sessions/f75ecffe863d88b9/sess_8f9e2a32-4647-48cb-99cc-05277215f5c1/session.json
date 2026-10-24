@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_8f9e2a32-4647-48cb-99cc-05277215f5c1",
+  "title": "Coordinate Feature Work Across Sessions",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "rootPaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "createdAt": "2026-10-24T20:19:00.305Z",
+  "lastModifiedAt": "2026-10-24T20:20:24.006Z",
+  "modelId": "auto",
+  "workflowLaunch": "when-asked",
+  "contextSnapshotModelDisplay": {
+    "modelId": "auto",
+    "display": "Auto (model selected dynamically on the server)"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "status": "idle",
+  "_meta": {
+    "kiro": {
+      "policyPreset": [
+        "edit-workspace"
+      ],
+      "shellType": "pwsh",
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        }
+      }
+    }
+  }
+}

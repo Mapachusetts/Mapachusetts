@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_4443820a-9966-4bde-90cc-bbf15840c373",
+  "title": "New Session",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "C:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts"
+  ],
+  "rootPaths": [
+    "C:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts"
+  ],
+  "createdAt": "2026-10-24T13:51:38.538Z",
+  "lastModifiedAt": "2026-10-24T13:51:39.062Z",
+  "workflowLaunch": "when-asked",
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "_meta": {
+    "kiro": {
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "codeIntelligence": {
+          "enabled": true
+        },
+        "knowledge": {
+          "enabled": true
+        },
+        "thinking": {
+          "enabled": true
+        },
+        "largeToolOutputHandler": {
+          "enabled": true
+        },
+        "workflowNotifications": {
+          "enabled": false,
+          "delivery": "steer"
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        },
+        "userMemoryOptIn": {
+          "enabled": false
+        }
+      },
+      "executionTarget": {
+        "kind": "local"
+      }
+    }
+  },
+  "autopilot": true
+}

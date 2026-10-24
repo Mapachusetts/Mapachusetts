@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_481f3104-0318-473a-a9da-dc239db1a23d",
+  "title": "Open Kiro in VSCode",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "C:\\Users\\jarba"
+  ],
+  "rootPaths": [
+    "C:\\Users\\jarba"
+  ],
+  "createdAt": "2026-10-24T13:48:35.503Z",
+  "lastModifiedAt": "2026-10-24T13:57:56.911Z",
+  "modelId": "auto",
+  "autopilot": true,
+  "workflowLaunch": "when-asked",
+  "contextSnapshotModelDisplay": {
+    "modelId": "auto",
+    "display": "Auto (model selected dynamically on the server)"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "status": "idle",
+  "_meta": {
+    "kiro": {
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "codeIntelligence": {
+          "enabled": true
+        },
+        "knowledge": {
+          "enabled": true
+        },
+        "thinking": {
+          "enabled": true
+        },
+        "largeToolOutputHandler": {
+          "enabled": true
+        },
+        "workflowNotifications": {
+          "enabled": false,
+          "delivery": "steer"
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        },
+        "userMemoryOptIn": {
+          "enabled": false
+        }
+      },
+      "executionTarget": {
+        "kind": "local"
+      }
+    }
+  }
+}

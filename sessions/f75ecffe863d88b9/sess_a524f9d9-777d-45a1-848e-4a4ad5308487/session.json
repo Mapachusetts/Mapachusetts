@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_a524f9d9-777d-45a1-848e-4a4ad5308487",
+  "title": "Deploy Application To Vercel",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "rootPaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "createdAt": "2026-10-24T22:43:40.540Z",
+  "lastModifiedAt": "2026-10-24T23:39:49.206Z",
+  "modelId": "claude-opus-5.5",
+  "autopilot": true,
+  "workflowLaunch": "when-asked",
+  "effortLevel": "max",
+  "contextSnapshotModelDisplay": {
+    "modelId": "claude-opus-5.5",
+    "display": "Claude Opus 5.5"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "status": "in_progress",
+  "_meta": {
+    "kiro": {
+      "policyPreset": [
+        "edit-workspace"
+      ],
+      "shellType": "pwsh",
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        }
+      }
+    }
+  }
+}

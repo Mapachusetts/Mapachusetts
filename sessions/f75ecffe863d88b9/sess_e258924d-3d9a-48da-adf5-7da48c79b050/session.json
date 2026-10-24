@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_e258924d-3d9a-48da-adf5-7da48c79b050",
+  "title": "Plan new feature",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "rootPaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "createdAt": "2026-10-24T20:43:01.097Z",
+  "lastModifiedAt": "2026-10-24T21:53:31.322Z",
+  "modelId": "claude-opus-5.5",
+  "autopilot": true,
+  "workflowLaunch": "when-asked",
+  "effortLevel": "max",
+  "contextSnapshotModelDisplay": {
+    "modelId": "claude-opus-5.5",
+    "display": "Claude Opus 5.5"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "description": "I'm waiting for the user to describe the new feature. Once I have it, I'll write an implementation plan based on the current code.",
+  "status": "idle",
+  "_meta": {
+    "kiro": {
+      "policyPreset": [
+        "edit-workspace"
+      ],
+      "shellType": "pwsh",
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        }
+      }
+    }
+  }
+}
