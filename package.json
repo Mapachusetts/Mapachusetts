@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ingest": "tsx --env-file=.env lib/ingest.ts",
+    "summarize": "tsx --env-file=.env lib/summarize.ts",
+    "news": "npm run ingest && npm run summarize"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -18,6 +21,7 @@
     "@types/node": "^20.14.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.5.3"
   }
 }

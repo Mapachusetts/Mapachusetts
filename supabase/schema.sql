@@ -91,3 +91,69 @@ values
     ]'::jsonb
   )
 on conflict (slug) do nothing;
+
+-- Articles -------------------------------------------------------------
+-- Political news headlines ingested from RSS feeds (see lib/ingest.ts).
+-- We store only headline + URL + short snippet + date — never full text.
+create table if not exists public.articles (
+  id           bigint generated always as identity primary key,
+  url          text unique not null,   -- unique: lets us upsert and skip duplicates
+  title        text not null,
+  snippet      text,
+  source       text,
+  published_at text,
+  created_at   timestamptz not null default now()
+);
+
+-- Keep the newest-first listing fast.
+create index if not exists articles_created_at_idx
+  on public.articles (created_at desc);
+
+-- Row Level Security: public can READ, writes go through the
+-- service_role key (which bypasses RLS) from lib/ingest.ts.
+alter table public.articles enable row level security;
+
+drop policy if exists "Public read access" on public.articles;
+create policy "Public read access"
+  on public.articles
+  for select
+  to anon, authenticated
+  using (true);
+
+-- Article ↔ politician links -------------------------------------------
+-- Which articles mention which politicians (filled by lib/summarize.ts).
+create table if not exists public.article_politicians (
+  article_id    bigint not null references public.articles(id) on delete cascade,
+  politician_id uuid   not null references public.politicians(id) on delete cascade,
+  primary key (article_id, politician_id)
+);
+
+alter table public.article_politicians enable row level security;
+
+drop policy if exists "Public read access" on public.article_politicians;
+create policy "Public read access"
+  on public.article_politicians
+  for select
+  to anon, authenticated
+  using (true);
+
+-- Per-politician news summaries ------------------------------------------
+-- An AI-generated, cited summary of recent coverage. We store only the
+-- summary and citation metadata, never the full article text.
+create table if not exists public.politician_news_summaries (
+  politician_id uuid primary key references public.politicians(id) on delete cascade,
+  summary       text not null,                  -- contains [n] citation markers
+  citations     jsonb not null default '[]'::jsonb, -- [{n, title, url, source, published_at}]
+  article_count int not null default 0,
+  model         text,
+  generated_at  timestamptz not null default now()
+);
+
+alter table public.politician_news_summaries enable row level security;
+
+drop policy if exists "Public read access" on public.politician_news_summaries;
+create policy "Public read access"
+  on public.politician_news_summaries
+  for select
+  to anon, authenticated
+  using (true);
