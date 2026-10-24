@@ -140,6 +140,19 @@ export interface Misconception {
   sourceUrl: string;
 }
 
+/** Current office / candidacy status shown as a badge on the profile header. */
+export interface CandidateStatus {
+  currentTitle: string;
+  state: string;
+  statusType: "incumbent" | "running" | "former";
+  statusLabel: string;
+  termInfo: string;
+  nextElection?: string | null;
+  runningFor?: string | null;
+  committees?: string[];
+  plainEnglish?: string;
+}
+
 /** Hand-curated research profile, keyed by the politician's slug. */
 export interface CandidateProfile {
   slug: string;
@@ -148,6 +161,8 @@ export interface CandidateProfile {
   party: string;
   /** Official public-domain headshot URL (e.g. congressional bioguide). */
   photo?: string;
+  /** Current office / candidacy status. */
+  status?: CandidateStatus;
   openSecretsUrl?: string;
   funding?: Funding;
   career?: ProfileCareerEntry[];
@@ -172,3 +187,45 @@ export interface CandidateView {
   misconceptions: Misconception[];
   news: PoliticianNewsSummary | null;
 }
+
+// ── User-reported live map events ────────────────────────────────────
+
+export type MapEventType =
+  | "protest"
+  | "rally"
+  | "town-hall"
+  | "march"
+  | "vigil"
+  | "community-meeting"
+  | "other";
+
+export type MapEventStatus = "active" | "ended" | "cancelled";
+
+/** A civic event reported by a signed-in user, shown on the Massachusetts map. */
+export interface MapEvent {
+  id: string;
+  user_id: string;
+  type: MapEventType;
+  title: string;
+  description: string | null;
+  lat: number;
+  lng: number;
+  /** ISO timestamp of when the event happens; null = happening now / ongoing. */
+  event_time: string | null;
+  status: MapEventStatus;
+  created_at: string;
+}
+
+/** Human-readable labels + marker colors for each event type. */
+export const EVENT_TYPE_META: Record<
+  MapEventType,
+  { label: string; color: string; emoji: string }
+> = {
+  protest: { label: "Protest", color: "#dc2626", emoji: "✊" },
+  rally: { label: "Rally", color: "#ea580c", emoji: "📣" },
+  march: { label: "March", color: "#d97706", emoji: "🚶" },
+  "town-hall": { label: "Town Hall", color: "#2563eb", emoji: "🏛️" },
+  "community-meeting": { label: "Community Meeting", color: "#0891b2", emoji: "👥" },
+  vigil: { label: "Vigil", color: "#7c3aed", emoji: "🕯️" },
+  other: { label: "Other", color: "#4b5563", emoji: "📍" },
+};

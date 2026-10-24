@@ -157,3 +157,69 @@ create policy "Public read access"
   for select
   to anon, authenticated
   using (true);
+
+-- ════════════════════════════════════════════════════════════════════
+-- USER-REPORTED LIVE EVENTS (protests, rallies, town halls, etc.)
+-- ════════════════════════════════════════════════════════════════════
+-- Signed-in users drop a pin on the Massachusetts map to report a live
+-- civic event. Everyone can read; only authenticated users can create,
+-- and users can only edit/delete their own reports (enforced by RLS).
+
+create table if not exists public.map_events (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  type        text not null default 'protest'
+              check (type in ('protest','rally','town-hall','march','vigil','community-meeting','other')),
+  title       text not null,
+  description text,
+  -- Latitude / longitude of the pin. Constrained to the Massachusetts
+  -- bounding box so reports stay in-region.
+  lat         double precision not null check (lat between 41.1 and 42.95),
+  lng         double precision not null check (lng between -73.6 and -69.8),
+  -- When the event is happening (user-provided). Null = happening now / ongoing.
+  event_time  timestamptz,
+  status      text not null default 'active'
+              check (status in ('active','ended','cancelled')),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists map_events_created_at_idx
+  on public.map_events (created_at desc);
+
+create index if not exists map_events_user_idx
+  on public.map_events (user_id);
+
+alter table public.map_events enable row level security;
+
+-- Anyone (even logged out) can read events — this is a public civic map.
+drop policy if exists "Public read events" on public.map_events;
+create policy "Public read events"
+  on public.map_events
+  for select
+  to anon, authenticated
+  using (true);
+
+-- Only signed-in users can create events, and only as themselves.
+drop policy if exists "Authenticated users can report events" on public.map_events;
+create policy "Authenticated users can report events"
+  on public.map_events
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+-- Users can update only their own events.
+drop policy if exists "Users update own events" on public.map_events;
+create policy "Users update own events"
+  on public.map_events
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Users can delete only their own events.
+drop policy if exists "Users delete own events" on public.map_events;
+create policy "Users delete own events"
+  on public.map_events
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);

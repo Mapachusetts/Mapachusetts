@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { signOut } from "@/app/auth/actions";
 
 interface NavLink {
   href: string;
@@ -15,8 +17,8 @@ const LINKS: NavLink[] = [
   { href: "/#home", label: "Home", section: "home" },
   { href: "/#research", label: "Research", section: "research" },
   { href: "/news", label: "News" },
+  { href: "/map", label: "Events Map" },
   { href: "/#about", label: "About", section: "about" },
-  { href: "/#contact", label: "Contact", section: "contact" },
 ];
 
 /** Site navbar with the mobile hamburger menu from the candidate-search design. */
@@ -24,6 +26,27 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Track auth state in the browser so the navbar reflects sign in/out live.
+  useEffect(() => {
+    let supabase;
+    try {
+      supabase = createClient();
+    } catch {
+      return; // env not configured
+    }
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   // On the home page, highlight the link for whichever section is mid-screen.
   useEffect(() => {
@@ -91,6 +114,26 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          {/* Auth control */}
+          {userEmail ? (
+            <form action={signOut} className="nav-auth">
+              <span className="nav-user" title={userEmail}>
+                {userEmail.split("@")[0]}
+              </span>
+              <button type="submit" className="nav-signout">
+                Sign out
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login"
+              className="nav-signin"
+              onClick={() => setMenuOpen(false)}
+            >
+              Sign in
+            </Link>
+          )}
         </nav>
       </div>
     </header>
