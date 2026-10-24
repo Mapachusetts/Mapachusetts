@@ -13,6 +13,10 @@ export class Navigation {
   constructor() {
     this.root = PLACES;
     this.current = PLACES; // start at the globe
+    // The exact spot being looked at, when it isn't simply the place's center:
+    // a searched address or the user's GPS position. Districts (Congress,
+    // legislature, schools, wards) are looked up for THIS point.
+    this.point = null;
     this._subscribers = [];
   }
 
@@ -35,6 +39,8 @@ export class Navigation {
     return {
       current: this.current,
       path, // breadcrumb trail root -> current
+      point: this.point || this.current.center,
+      pointIsExact: !!this.point,
       children: this.current.children || [],
       canAscend: path.length > 1,
       canDescend: (this.current.children || []).length > 0,
@@ -51,47 +57,49 @@ export class Navigation {
         level,
         label: levelByKey(level).label,
         parentId: parent.id,
+        loading: parent.childrenState === "loading",
         options: options.map((o) => ({ id: o.id, name: o.name })),
         selectedId: selected ? selected.id : "",
       };
     });
   }
 
+  _go(node, point = null) {
+    this.current = node;
+    this.point = point;
+    this._emit();
+  }
+
   // Drill down into a specific child node.
   descendTo(node) {
-    this.current = node;
-    this._emit();
+    this._go(node);
   }
 
   // Move up one level toward the globe.
   ascend() {
     const path = pathToNode(this.current.id);
-    if (path.length > 1) {
-      this.current = path[path.length - 2];
-      this._emit();
-    }
+    if (path.length > 1) this._go(path[path.length - 2]);
   }
 
   // Jump to any node in the tree by id.
   jumpTo(nodeId) {
     const path = pathToNode(nodeId);
-    if (path.length) {
-      this.current = path[path.length - 1];
-      this._emit();
-    }
+    if (path.length) this._go(path[path.length - 1]);
   }
 
   // Go straight to the last node of a path (from search / geolocation).
-  goToPath(path) {
-    if (path && path.length) {
-      this.current = path[path.length - 1];
-      this._emit();
-    }
+  // `point` = the exact [lng, lat] to look up districts for.
+  goToPath(path, point = null) {
+    if (path && path.length) this._go(path[path.length - 1], point);
+  }
+
+  // Re-emit the current state (used after lists finish loading).
+  refresh() {
+    this._emit();
   }
 
   // Reset to the whole-world view.
   reset() {
-    this.current = this.root;
-    this._emit();
+    this._go(this.root);
   }
 }

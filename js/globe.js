@@ -1,29 +1,59 @@
 // js/globe.js
-// Wraps MapLibre GL in a real 3D globe and exposes a small API for the rest of
-// the app: render markers for a node's children, fly to a node, and report
-// clicks back up via callbacks.
+// The 3D globe (MapLibre GL, globe projection) and everything drawn on it:
 //
-// MapLibre v6 is distributed as an ES module only, so it is imported from the
-// CDN here (pin the version; bump deliberately). No API key is needed: the
-// basemap is OpenFreeMap's "bright" vector style.
+//   1. WORLD SHADING   the U.S. lit up, other countries greyed out
+//   2. CHILD SHAPES    clickable outlines of every state / every county
+//   3. STACK OUTLINES  glowing outlines of the layers of government at a place
+//                      (city, county, school district, congressional district...)
+//   4. PINS            cities, plus a "you are here" pin
 //
-// Why a vector style: it gives crisp labels at every zoom (country, state, city
-// names) which helps people who are not used to reading maps.
+// MapLibre v6 is an ES module, imported from the CDN (pin the version; bump on
+// purpose). No API keys: basemap = OpenFreeMap, country shapes = MapLibre demo
+// tiles, state/county/district shapes = U.S. Census Bureau (data/census.js).
 
 import * as maplibregl from "https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.mjs";
 import { levelByKey } from "../data/levels.js";
 
-const STYLE_URL = "https://tiles.openfreemap.org/styles/bright";
+// ----- Themes ------------------------------------------------------------------
 
-// Free country polygons (MapLibre demo tiles). Each feature has ADM0_A3 (ISO
-// alpha-3 code, e.g. "USA") and NAME.
 const COUNTRIES_TILEJSON = "https://demotiles.maplibre.org/tiles/tiles.json";
+const ACTIVE_COUNTRIES = ["USA"]; // ISO alpha-3. Everything else is greyed out.
 
-// Countries that have information in the app. Everything else is greyed out.
-const ACTIVE_COUNTRIES = ["USA"];
-const ACTIVE_COLOR = "#2563eb";
-const ACTIVE_OUTLINE = "#1d4ed8";
-const INACTIVE_COLOR = "#6b7280";
+// Atmosphere glow around the globe that fades away as you zoom in.
+const ATMOSPHERE = ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0];
+
+const THEMES = {
+  night: {
+    style: "https://tiles.openfreemap.org/styles/dark",
+    background: "#0c1630", // land
+    water: "#050a18",
+    inactive: "#2b3552",
+    inactiveOpacity: 0.92,
+    active: "#38bdf8",
+    activeOpacity: 0.24,
+    outline: "#7dd3fc",
+    kidsLine: "rgba(186, 230, 253, 0.5)",
+    kidsFill: "rgba(186, 230, 253, 0.05)",
+    label: "#e0f2fe",
+    halo: "rgba(5, 10, 24, 0.95)",
+    sky: { "sky-color": "#1d4ed8", "horizon-color": "#38bdf8", "atmosphere-blend": ATMOSPHERE },
+  },
+  day: {
+    style: "https://tiles.openfreemap.org/styles/bright",
+    background: null,
+    water: null,
+    inactive: "#6b7280",
+    inactiveOpacity: 0.8,
+    active: "#2563eb",
+    activeOpacity: 0.28,
+    outline: "#1d4ed8",
+    kidsLine: "rgba(30, 58, 138, 0.55)",
+    kidsFill: "rgba(37, 99, 235, 0.06)",
+    label: "#0f172a",
+    halo: "rgba(255, 255, 255, 0.92)",
+    sky: { "sky-color": "#60a5fa", "horizon-color": "#bfdbfe", "atmosphere-blend": ATMOSPHERE },
+  },
+};
 
 // Idle motion on the whole-world view: the globe slowly sways left and right
 // around the U.S. (a sine wave: +/-35 degrees of longitude, ~30 s per cycle).
@@ -31,32 +61,49 @@ const SWAY_CENTER_LNG = -98;
 const SWAY_AMPLITUDE_DEG = 35;
 const SWAY_RAD_PER_SEC = (2 * Math.PI) / 30;
 
+const EMPTY_FC = { type: "FeatureCollection", features: [] };
+
 export class Globe {
   /**
-   * @param {string} containerId - id of the map container element
-   * @param {object} handlers - { onPlaceClick(node) }
+   * @param {string} containerId
+   * @param {object} handlers
+   *   onPlaceClick(node)     a city pin was clicked
+   *   onRegionClick(region)  a country was clicked while zoomed out
+   *   onShapeClick(shape)    a state / county outline was clicked
+   *   onZoom(zoom)           the zoom level changed
+   * @param {"night"|"day"} [theme]
    */
-  constructor(containerId, handlers = {}) {
+  constructor(containerId, handlers = {}, theme = "night") {
     this.handlers = handlers;
+    this.theme = theme;
+    this._container = document.getElementById(containerId);
     this._markers = [];
     this._spinning = false;
     this._atGlobe = true;
-    this._container = document.getElementById(containerId);
+    this._pad = { left: 0, right: 0, bottom: 0 }; // px covered by floating panels
+    this._stackShapes = new Map(); // id -> Feature
+    this._bounds = new Map(); // stack shape id -> [w, s, e, n]
+    this._kids = EMPTY_FC;
+    this._kidBounds = new Map(); // id -> [w, s, e, n]
+    this._focusId = null;
+    this._hoverId = null;
 
     this.map = new maplibregl.Map({
       container: containerId,
-      style: STYLE_URL,
+      style: THEMES[theme].style,
       center: [SWAY_CENTER_LNG, 30], // start looking at the U.S.
       zoom: this.worldZoom(),
       attributionControl: { compact: true },
-      // Keep the camera from tilting past the horizon on mobile
       maxPitch: 60,
     });
+    this.map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
-    this.map.addControl(
-      new maplibregl.NavigationControl({ visualizePitch: true }),
-      "bottom-right"
-    );
+    this._tip = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      className: "shape-tip",
+      offset: 14,
+    });
 
     // Pause the idle sway whenever the user touches the globe.
     for (const evt of ["mousedown", "touchstart", "wheel"]) {
@@ -67,98 +114,240 @@ export class Globe {
       this.map.on("style.load", () => {
         // setProjection must be called after the style loads.
         this.map.setProjection({ type: "globe" });
-        // Atmosphere glow around the globe that fades out as you zoom in.
-        this.map.setSky({
-          "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0],
-        });
-        this._addRegionOverlay();
+        this._applyTheme();
+        this._installLayers();
+        this._pushData();
         resolve();
       });
     });
 
-    // Clicking / hovering a country while zoomed far out.
-    this.map.on("click", (e) => {
-      const region = this._regionAt(e.point);
-      if (region) this.handlers.onRegionClick?.(region);
-    });
-    this.map.on("mousemove", (e) => {
-      const region = this._regionAt(e.point);
-      this.map.getCanvas().style.cursor = !region
-        ? ""
-        : region.active
-        ? "pointer"
-        : "not-allowed";
-    });
+    this.map.on("error", (e) => console.warn("Map error:", e?.error?.message || e));
     this.map.on("zoom", () => this.handlers.onZoom?.(this.map.getZoom()));
+    this.map.on("click", (e) => this._onMapClick(e));
+    this.map.on("mousemove", (e) => this._onMapHover(e));
+  }
 
-    this.map.on("error", (e) => {
-      // Tile/style hiccups shouldn't break the app, but make them visible.
-      console.warn("Map error:", e && e.error ? e.error.message : e);
+  // ===== Theme =================================================================
+
+  setTheme(theme) {
+    if (theme === this.theme || !THEMES[theme]) return;
+    this.theme = theme;
+    // setStyle wipes our layers; style.load fires again and re-installs them.
+    // diff:false forces a clean reload. With the default "diff", MapLibre patches
+    // the old style in place, never fires style.load (so our layers and the
+    // globe projection are lost), and can reset the camera.
+    this.map.setStyle(THEMES[theme].style, { diff: false });
+  }
+
+  _applyTheme() {
+    const t = THEMES[this.theme];
+    this.map.setSky(t.sky);
+    if (t.background && this.map.getLayer("background")) {
+      this.map.setPaintProperty("background", "background-color", t.background);
+    }
+    if (t.water && this.map.getLayer("water")) {
+      this.map.setPaintProperty("water", "fill-color", t.water);
+    }
+    // Runway/taxiway strokes read as thick black scribbles on the dark map.
+    for (const layer of this.map.getStyle().layers) {
+      if (layer.id.startsWith("aeroway")) {
+        this.map.setLayoutProperty(layer.id, "visibility", this.theme === "night" ? "none" : "visible");
+      }
+    }
+    // The night basemap prints foreign regional names ("Sakha (Yakutia)") that
+    // just add noise from space; show state/region labels only once zoomed in.
+    if (this.map.getLayer("place_state")) {
+      this.map.setLayerZoomRange("place_state", 4, 24);
+    }
+  }
+
+  // ===== Layers ================================================================
+
+  _firstSymbolId() {
+    return this.map.getStyle().layers.find((l) => l.type === "symbol")?.id;
+  }
+
+  _installLayers() {
+    const map = this.map;
+    const t = THEMES[this.theme];
+    const underWater = map.getLayer("water") ? "water" : undefined;
+    const underLabels = this._firstSymbolId();
+
+    // 1. World shading: U.S. lit up, everything else greyed out. Fades out as
+    //    you zoom in, since by then you're already inside the U.S.
+    map.addSource("regions", { type: "vector", url: COUNTRIES_TILEJSON });
+    const isActive = ["in", ["get", "ADM0_A3"], ["literal", ACTIVE_COUNTRIES]];
+    const fade = (peak) => [
+      "interpolate", ["linear"], ["zoom"], 0, peak, 4.8, peak, 6.8, 0,
+    ];
+    const region = { source: "regions", "source-layer": "countries" };
+    map.addLayer({
+      ...region, id: "region-inactive", type: "fill", filter: ["!", isActive],
+      paint: { "fill-color": t.inactive, "fill-opacity": fade(t.inactiveOpacity) },
+    }, underWater);
+    map.addLayer({
+      ...region, id: "region-active", type: "fill", filter: isActive,
+      paint: { "fill-color": t.active, "fill-opacity": fade(t.activeOpacity) },
+    }, underWater);
+    map.addLayer({
+      ...region, id: "region-active-glow", type: "line", filter: isActive,
+      paint: {
+        "line-color": t.outline, "line-width": 7, "line-blur": 7,
+        "line-opacity": fade(0.55),
+      },
+    }, underWater);
+    map.addLayer({
+      ...region, id: "region-active-outline", type: "line", filter: isActive,
+      paint: {
+        "line-color": t.outline,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.4, 6, 2.6],
+        "line-opacity": fade(0.95),
+      },
+    }, underWater);
+
+    // 2. Clickable child shapes (all states / a state's counties)
+    map.addSource("kids", { type: "geojson", data: EMPTY_FC });
+    map.addLayer({
+      id: "kids-fill", type: "fill", source: "kids",
+      paint: { "fill-color": t.kidsFill, "fill-opacity": 1 },
+    }, underLabels);
+    map.addLayer({
+      id: "kids-hover", type: "fill", source: "kids", filter: ["==", ["get", "id"], ""],
+      paint: { "fill-color": t.active, "fill-opacity": 0.38 },
+    }, underLabels);
+    map.addLayer({
+      id: "kids-line", type: "line", source: "kids",
+      paint: {
+        "line-color": t.kidsLine,
+        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.7, 8, 1.4],
+      },
+    }, underLabels);
+    map.addLayer({
+      id: "kids-label", type: "symbol", source: "kids",
+      layout: {
+        "text-field": ["get", "short"],
+        "text-font": ["Noto Sans Bold"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 2, 10, 5, 12, 8, 15],
+        "text-optional": true,
+      },
+      paint: { "text-color": t.label, "text-halo-color": t.halo, "text-halo-width": 1.6 },
+    });
+
+    // 3. Outlines of the government layers at the current place
+    map.addSource("stack", { type: "geojson", data: EMPTY_FC });
+    map.addLayer({
+      id: "stack-fill", type: "fill", source: "stack",
+      paint: { "fill-color": ["get", "color"], "fill-opacity": 0.06 },
+    }, underLabels);
+    map.addLayer({
+      id: "stack-glow", type: "line", source: "stack",
+      layout: { "line-join": "round" },
+      paint: { "line-color": ["get", "color"], "line-width": 6, "line-blur": 5, "line-opacity": 0.15 },
+    }, underLabels);
+    map.addLayer({
+      id: "stack-line", type: "line", source: "stack",
+      layout: { "line-join": "round" },
+      paint: { "line-color": ["get", "color"], "line-width": 1.4, "line-opacity": 0.75 },
+    }, underLabels);
+    this._paintHighlight();
+  }
+
+  // Re-send our data after a style change.
+  _pushData() {
+    this.map.getSource("kids")?.setData(this._kids);
+    this._pushStack();
+  }
+
+  _pushStack() {
+    this.map.getSource("stack")?.setData({
+      type: "FeatureCollection",
+      features: [...this._stackShapes.values()],
     });
   }
 
-  // ----- Active vs. not-yet-available regions -------------------------------
-  //
-  // Mapachusetts only has information for the United States right now. The
-  // rest of the world stays on the map (so people keep their bearings) but is
-  // greyed out, and the U.S. is tinted and outlined. The shading fades away as
-  // you zoom in, since by then you are already inside the U.S.
-  //
-  // To make another country active later, add its ISO 3166-1 alpha-3 code to
-  // ACTIVE_COUNTRIES (and give it data in data/places.js).
-  _addRegionOverlay() {
+  // Emphasize the focused / hovered outline.
+  _paintHighlight() {
     const map = this.map;
-    map.addSource("regions", { type: "vector", url: COUNTRIES_TILEJSON });
-
-    const isActive = ["in", ["get", "ADM0_A3"], ["literal", ACTIVE_COUNTRIES]];
-    // Full strength when zoomed out, gone by zoom ~7.
-    const fade = (peak) => [
-      "interpolate", ["linear"], ["zoom"],
-      0, peak, 4.8, peak, 6.8, 0,
-    ];
-    // Insert just under the water layer so the basemap's accurate coastlines
-    // and lakes are drawn over these (coarser) country shapes.
-    const before = map.getLayer("water") ? "water" : undefined;
-    const base = { source: "regions", "source-layer": "countries" };
-
-    map.addLayer(
-      {
-        ...base,
-        id: "region-inactive",
-        type: "fill",
-        filter: ["!", isActive],
-        paint: { "fill-color": INACTIVE_COLOR, "fill-opacity": fade(0.8) },
-      },
-      before
-    );
-    map.addLayer(
-      {
-        ...base,
-        id: "region-active",
-        type: "fill",
-        filter: isActive,
-        paint: { "fill-color": ACTIVE_COLOR, "fill-opacity": fade(0.3) },
-      },
-      before
-    );
-    map.addLayer(
-      {
-        ...base,
-        id: "region-active-outline",
-        type: "line",
-        filter: isActive,
-        paint: {
-          "line-color": ACTIVE_OUTLINE,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 0, 1.6, 6, 3.2],
-          "line-opacity": fade(0.95),
-        },
-      },
-      before
-    );
+    if (!map.getLayer("stack-fill")) return;
+    const id = this._hoverId || this._focusId || "";
+    const is = ["==", ["get", "id"], id];
+    map.setPaintProperty("stack-fill", "fill-opacity", ["case", is, 0.3, 0.05]);
+    map.setPaintProperty("stack-glow", "line-width", ["case", is, 14, 6]);
+    map.setPaintProperty("stack-glow", "line-opacity", ["case", is, 0.7, 0.14]);
+    map.setPaintProperty("stack-line", "line-width", ["case", is, 3.2, 1.3]);
+    map.setPaintProperty("stack-line", "line-opacity", ["case", is, 1, 0.65]);
   }
 
-  // Which country (if any) is under a screen point? Only while zoomed out far
-  // enough that the shading is visible.
+  // ----- Stack outlines (layers of government at the current place) -----------
+
+  /** Remove all stack outlines. */
+  clearStack() {
+    this._stackShapes.clear();
+    this._focusId = null;
+    this._hoverId = null;
+    this._pushStack();
+    this._paintHighlight();
+  }
+
+  /** Add (or replace) one layer's outline. */
+  addStackShape({ id, color, name, kind, geometry }) {
+    if (!geometry) return;
+    this._stackShapes.set(id, {
+      type: "Feature",
+      geometry,
+      properties: { id, color, name, kind },
+    });
+    this._bounds.set(id, bboxOf(geometry));
+    this._pushStack();
+  }
+
+  setFocus(id) {
+    this._focusId = id;
+    this._paintHighlight();
+  }
+
+  setHover(id) {
+    this._hoverId = id;
+    this._paintHighlight();
+  }
+
+  /** Bounding box [w, s, e, n] of a stack outline we've loaded, if any. */
+  boundsOf(id) {
+    return this._bounds.get(id) || null;
+  }
+
+  // ----- Child shapes (clickable states / counties) ----------------------------
+
+  /** Show clickable outlines (a GeoJSON FeatureCollection) or hide with null. */
+  setChildShapes(fc) {
+    this._kids = fc || EMPTY_FC;
+    this._kidBounds.clear();
+    for (const f of this._kids.features) {
+      this._kidBounds.set(f.properties.id, bboxOf(f.geometry));
+    }
+    this.map.getSource("kids")?.setData(this._kids);
+    this._setHoverShape(null);
+  }
+
+  hasChildShapes() {
+    return this._kids.features.length > 0;
+  }
+
+  _setHoverShape(id) {
+    if (this.map.getLayer("kids-hover")) {
+      this.map.setFilter("kids-hover", ["==", ["get", "id"], id || ""]);
+    }
+  }
+
+  // ----- Map interaction --------------------------------------------------------
+
+  _shapeAt(point) {
+    if (!this.map.getLayer("kids-fill")) return null;
+    const hit = this.map.queryRenderedFeatures(point, { layers: ["kids-fill"] })[0];
+    return hit ? hit.properties : null;
+  }
+
+  // Which country is under a screen point (only while the shading is visible).
   _regionAt(point) {
     if (this.map.getZoom() >= 6 || !this.map.getLayer("region-active")) return null;
     const hit = this.map.queryRenderedFeatures(point, {
@@ -172,18 +361,41 @@ export class Globe {
     };
   }
 
-  // Zoom at which the whole globe fills about 85% of the smaller side of the
-  // map area. In globe projection the sphere's diameter in px is
-  // 512 * 2^zoom / PI, so we solve for zoom.
-  worldZoom() {
-    const w = this._container.clientWidth || 800;
-    const h = this._container.clientHeight || 600;
-    const diameter = 0.85 * Math.min(w, h);
-    const zoom = Math.log2((diameter * Math.PI) / 512);
-    return Math.min(2.8, Math.max(0.8, zoom));
+  _onMapClick(e) {
+    const shape = this._shapeAt(e.point);
+    if (shape) {
+      this.handlers.onShapeClick?.({
+        id: shape.id,
+        name: shape.name,
+        geoid: shape.geoid,
+        bbox: this._kidBounds.get(shape.id) || null,
+      });
+      return;
+    }
+    const region = this._regionAt(e.point);
+    if (region) this.handlers.onRegionClick?.(region);
   }
 
-  // ----- Idle sway ---------------------------------------------------------
+  _onMapHover(e) {
+    const canvas = this.map.getCanvas();
+    const shape = this._shapeAt(e.point);
+    if (shape) {
+      canvas.style.cursor = "pointer";
+      this._setHoverShape(shape.id);
+      this._tip
+        .setLngLat(e.lngLat)
+        .setHTML(`<strong></strong><span>Click to open</span>`)
+        .addTo(this.map);
+      this._tip.getElement().querySelector("strong").textContent = shape.name;
+      return;
+    }
+    this._setHoverShape(null);
+    this._tip.remove();
+    const region = this._regionAt(e.point);
+    canvas.style.cursor = !region ? "" : region.active ? "pointer" : "not-allowed";
+  }
+
+  // ===== Idle sway ============================================================
   // (startSpin/stopSpin keep their names; the motion is a sway, not a spin.)
 
   startSpin() {
@@ -208,7 +420,7 @@ export class Globe {
     this._spinning = false;
   }
 
-  // ----- Markers -----------------------------------------------------------
+  // ===== Pins =================================================================
 
   clearMarkers() {
     for (const m of this._markers) m.remove();
@@ -216,22 +428,21 @@ export class Globe {
   }
 
   /**
-   * Render a clickable marker for each child node. Clicking one calls
-   * handlers.onPlaceClick(childNode).
+   * Clickable pins for places that have no outline (cities). Clicking one calls
+   * handlers.onPlaceClick(node).
    *
    * Structure matters: MapLibre positions the OUTER element with its own
-   * transform, so we never style that element's position. The visible pin lives
-   * in an inner element sized exactly to the dot, and the label hangs below it
-   * absolutely, so the dot sits precisely on the coordinate (anchor: center).
+   * transform, so never style that element's position. The visible pin lives in
+   * an inner button sized exactly to the dot, with the label hanging below it,
+   * so the dot sits precisely on the coordinate (anchor: center).
    * @param {object[]} nodes
    */
   renderMarkers(nodes) {
     this.clearMarkers();
-    // With many pins (e.g. 51 states) full names would overlap, so show short
-    // codes like "TX" instead. The full name is still the hover text and the
-    // screen-reader label, and the basemap prints state names too.
-    const dense = nodes.length > 12;
+    // With many pins, show names only on hover so they don't pile up.
+    const dense = nodes.length > 10;
     for (const node of nodes) {
+      if (!node.center || node.center[0] == null) continue;
       const el = document.createElement("div");
       el.className = dense ? "map-marker map-marker-dense" : "map-marker";
 
@@ -241,8 +452,7 @@ export class Globe {
       btn.title = node.name;
       btn.setAttribute("aria-label", `Go to ${node.name}`);
       btn.innerHTML = `<span class="map-marker-dot"></span><span class="map-marker-label"></span>`;
-      btn.querySelector(".map-marker-label").textContent =
-        dense && node.code ? node.code : node.name;
+      btn.querySelector(".map-marker-label").textContent = node.name;
       btn.addEventListener("click", (ev) => {
         ev.stopPropagation();
         this.handlers.onPlaceClick?.(node);
@@ -256,27 +466,73 @@ export class Globe {
     }
   }
 
-  /**
-   * A non-clickable "you are here" pin, shown when the current place has no
-   * smaller places to drill into (so the view never looks empty).
-   * @param {object} node
-   */
-  renderCurrentPin(node) {
+  /** A non-clickable "you are here" pin at a coordinate. */
+  renderYouPin(lngLat, label) {
     const el = document.createElement("div");
     el.className = "map-marker map-marker-current";
     el.innerHTML = `<div class="map-marker-btn"><span class="map-marker-dot"></span><span class="map-marker-label"></span></div>`;
-    el.querySelector(".map-marker-label").textContent = node.name;
-    const marker = new maplibregl.Marker({ element: el, anchor: "center" })
-      .setLngLat(node.center)
-      .addTo(this.map);
-    this._markers.push(marker);
+    el.querySelector(".map-marker-label").textContent = label;
+    this._markers.push(
+      new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat(lngLat).addTo(this.map)
+    );
   }
 
-  // ----- Camera ------------------------------------------------------------
+  // ===== Camera ===============================================================
 
   /**
-   * Fly the camera to a node. Places found by search carry an `extent`, which
-   * we frame; otherwise we use the node's own zoom, then its level's default.
+   * Pixels covered by floating panels (intro on the left, info panel on the
+   * right, bottom sheet on phones). Camera moves keep the place in the clear.
+   */
+  setPadding({ left = 0, right = 0, bottom = 0 } = {}) {
+    this._pad = { left, right, bottom };
+  }
+
+  /** Jump (no animation) to the whole-world view, honoring panel padding. */
+  initWorldView() {
+    this.map.jumpTo({
+      center: [SWAY_CENTER_LNG, 30],
+      zoom: this.worldZoom(),
+      padding: { top: 0, bottom: this._pad.bottom, left: this._pad.left, right: this._pad.right },
+    });
+  }
+
+  // Zoom at which the whole globe fills about 85% of the smaller side of the
+  // visible map area. In globe projection the sphere's diameter in px is
+  // 512 * 2^zoom / PI, so we solve for zoom.
+  worldZoom() {
+    const w = (this._container.clientWidth || 800) - this._pad.left - this._pad.right;
+    const h = (this._container.clientHeight || 600) - this._pad.bottom;
+    const diameter = 0.85 * Math.min(w, h);
+    const zoom = Math.log2((diameter * Math.PI) / 512);
+    return Math.min(2.8, Math.max(0.8, zoom));
+  }
+
+  // Camera padding for a place view: clear of the command bar and panels.
+  _padding() {
+    return {
+      top: 90,
+      bottom: 60 + this._pad.bottom,
+      left: 30 + this._pad.left,
+      right: 30 + this._pad.right,
+    };
+  }
+
+  /** Smoothly frame a [w, s, e, n] box. */
+  frame(bbox, { maxZoom = 13.5, duration = 2000 } = {}) {
+    this.stopSpin();
+    this._atGlobe = false;
+    const [w, s, e, n] = bbox;
+    this.map.fitBounds(
+      [[w, s], [e, n]],
+      // absolutePadding: our padding REPLACES the map's persistent padding.
+      // Without it MapLibre subtracts both, and the box can't fit the screen.
+      { padding: this._padding(), absolutePadding: true, maxZoom, duration, essential: true }
+    );
+  }
+
+  /**
+   * Fly the camera to a place. Uses its `extent` if we know it, else its zoom,
+   * else its level's default.
    * @param {object} node
    */
   flyTo(node) {
@@ -284,14 +540,7 @@ export class Globe {
     this.stopSpin();
 
     if (node.extent && !wantsSpin) {
-      const [w, s, e, n] = node.extent;
-      this.map.fitBounds(
-        [
-          [w, s],
-          [e, n],
-        ],
-        { padding: 60, maxZoom: 13, duration: 2200, essential: true }
-      );
+      this.frame(node.extent);
     } else {
       const lvl = levelByKey(node.level);
       const zoom = wantsSpin
@@ -300,6 +549,9 @@ export class Globe {
       this.map.flyTo({
         center: node.center,
         zoom,
+        padding: wantsSpin
+          ? { top: 0, bottom: this._pad.bottom, left: this._pad.left, right: this._pad.right }
+          : this._padding(),
         duration: 2400,
         curve: 1.5,
         essential: true,
@@ -318,4 +570,21 @@ export class Globe {
   resize() {
     this.map.resize();
   }
+}
+
+// [west, south, east, north] of a GeoJSON geometry
+function bboxOf(geometry) {
+  let w = 180, s = 90, e = -180, n = -90;
+  const visit = (c) => {
+    if (typeof c[0] === "number") {
+      if (c[0] < w) w = c[0];
+      if (c[0] > e) e = c[0];
+      if (c[1] < s) s = c[1];
+      if (c[1] > n) n = c[1];
+    } else {
+      c.forEach(visit);
+    }
+  };
+  visit(geometry.coordinates);
+  return [w, s, e, n];
 }

@@ -5,6 +5,9 @@
 // Event shape:
 //   id          - unique-ish id
 //   title       - short name
+//   kind        - OPTIONAL layer of government that holds it (a key of KINDS in
+//                 data/kinds.js, e.g. "city", "school", "congress"). If omitted,
+//                 it is taken from the place the event is attached to.
 //   type        - key of EVENT_TYPES below
 //   start       - ISO 8601 date-time string (local time of the event)
 //   end         - optional ISO string
@@ -60,6 +63,7 @@ export function electionDayEvent(date = "2026-11-03", scopeLabel = "") {
   return makeEvent({
     title: `General Election Day${scopeLabel ? ` (${scopeLabel})` : ""}`,
     type: "voting",
+    kind: "country",
     start: `${date}T07:00:00`,
     end: `${date}T20:00:00`,
     venue: "Your assigned polling place (check your local election office)",

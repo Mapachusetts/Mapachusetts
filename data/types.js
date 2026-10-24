@@ -24,6 +24,8 @@
  *                                 Offline-only fallback for matching GPS points.
  * @property {string[]} [aliases] Other names that should match this place.
  * @property {string}   [code]    "US" for the country, USPS code for states ("TX").
+ * @property {string}   [geoid]   Census id (state "48", county "48157", city
+ *                                 "4870808"). Lets Census data merge with curated nodes.
  * @property {Race[]}   races     Races DECIDED at this place (inherited downward).
  * @property {Event[]}  events    Events at this place (inherited downward).
  * @property {Place[]}  children  Places one level down.
@@ -39,9 +41,15 @@
  * @typedef {Object} Race
  * @property {string} id
  * @property {string} office        "Governor of Texas", "Mayor of Medford", ...
+ * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"} kind
+ *                                   WHICH LAYER OF GOVERNMENT decides it
+ *                                   (KINDS in data/kinds.js). The Ballot tab is
+ *                                   grouped by this, and it picks the color.
  * @property {"executive"|"legislative"|"local"|"education"|"measure"} category
- *                                   Controls grouping, icon and color
+ *                                   Small tag + icon on the card
  *                                   (CATEGORY_META in data/races.js).
+ * @property {string} [jurisdictionId]  Set on races generated for a district,
+ *                                   e.g. "congress:4822".
  * @property {string|null} [term]    "4 years"; null for ballot questions.
  * @property {string|null} electionDate  "YYYY-MM-DD" or null if it varies.
  * @property {{name: string, party: string|null}[]} candidates
@@ -74,7 +82,23 @@
  */
 
 /**
- * What the geocoder returns for a search or "Use my location" (js/geocode.js).
+ * One layer of government covering a point: a state, a congressional district,
+ * a school district, a ward... Produced by data/census.js (and
+ * data/local-sources.js for wards). A place's "stack" is the list of these.
+ *
+ * @typedef {Object} Jurisdiction
+ * @property {string} id        "congress:4822", "county:48157", ... (unique)
+ * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"} kind
+ * @property {string} name      "Fort Bend County"
+ * @property {string} [short]   Compact label for chips: "TX-22"
+ * @property {string} [type]    "City", "Town", "Unified school district"
+ * @property {string} geoid     Census id (or "<source>:<value>" for wards)
+ * @property {[number, number]} [center]  [lng, lat] inside the area
+ * @property {string} [source]  Credit shown in the UI
+ */
+
+/**
+ * What the geocoder returns for a search (js/geocode.js).
  * Counties come back WITHOUT the word "County" ("Fort Bend").
  *
  * @typedef {Object} GeocodeResult

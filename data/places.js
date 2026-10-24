@@ -39,10 +39,8 @@ import {
   presidentialRace,
   makeGovernorRace,
   makeSenateRace,
-  makeHouseRace,
   makeCountyRace,
   makeMayorRace,
-  makeSchoolBoardRace,
   makeBallotMeasure,
 } from "./races.js";
 import { makeEvent, electionDayEvent, daysFromNow } from "./events.js";
@@ -63,11 +61,13 @@ const usa = node({
   aliases: ["usa", "united states of america", "us", "america"],
   center: [-98.5, 39.8],
   zoom: 3.4,
+  extent: [-125.5, 24.3, -66.5, 49.8], // lower 48; the camera frames this box
   races: [presidentialRace()],
   events: [electionDayEvent("2026-11-03", "United States")],
-  children: US_STATES.map(([code, name, lng, lat]) =>
+  children: US_STATES.map(([code, name, lng, lat, fips]) =>
     node({
       id: `us-${code.toLowerCase()}`,
+      geoid: fips, // Census state id; county ids start with it
       name,
       level: "state",
       code,
@@ -121,6 +121,7 @@ Object.assign(stateNode("MA"), {
   children: [
     node({
       id: "ma-suffolk",
+      geoid: "25025",
       name: "Suffolk County",
       level: "county",
       center: [-71.07, 42.33],
@@ -129,22 +130,19 @@ Object.assign(stateNode("MA"), {
       children: [
         node({
           id: "ma-boston",
+          geoid: "2502507000",
           name: "Boston",
           level: "city",
           center: [-71.0589, 42.3601],
           zoom: 11.5,
           bbox: [-71.19, 42.23, -70.98, 42.4],
           races: [
-            makeHouseRace("MA-07"),
             makeMayorRace("Boston"),
-            makeSchoolBoardRace(
-              "Boston School Committee",
-              "the Boston Public Schools"
-            ),
             makeBallotMeasure(
               "Sample City Question A",
               "Boston",
-              "Placeholder question about funding for public transit"
+              "Placeholder question about funding for public transit",
+              "city"
             ),
           ],
           events: [
@@ -175,15 +173,14 @@ Object.assign(stateNode("MA"), {
           zoom: 13,
           bbox: [-71.06, 42.37, -71.0, 42.41],
           races: [
-            makeHouseRace("MA-07"),
             makeMayorRace("Chelsea"),
-            makeSchoolBoardRace("Chelsea School Committee", "the Chelsea public schools"),
           ],
         }),
       ],
     }),
     node({
       id: "ma-middlesex",
+      geoid: "25017",
       name: "Middlesex County",
       level: "county",
       center: [-71.39, 42.48],
@@ -192,15 +189,14 @@ Object.assign(stateNode("MA"), {
       children: [
         node({
           id: "ma-medford",
+          geoid: "2501739835",
           name: "Medford",
           level: "city",
           center: [-71.1062, 42.4184],
           zoom: 12.3,
           bbox: [-71.15, 42.395, -71.07, 42.455],
           races: [
-            makeHouseRace("MA-05"),
             makeMayorRace("Medford"),
-            makeSchoolBoardRace("Medford School Committee", "the Medford Public Schools"),
           ],
           events: [
             makeEvent({
@@ -245,9 +241,7 @@ Object.assign(stateNode("MA"), {
           zoom: 12,
           bbox: [-71.16, 42.35, -71.06, 42.41],
           races: [
-            makeHouseRace("MA-07"),
             makeMayorRace("Cambridge"),
-            makeSchoolBoardRace("Cambridge School Committee", "the Cambridge public schools"),
           ],
           events: [
             makeEvent({
@@ -282,6 +276,7 @@ Object.assign(stateNode("TX"), {
   children: [
     node({
       id: "tx-fortbend",
+      geoid: "48157",
       name: "Fort Bend County",
       level: "county",
       center: [-95.77, 29.53],
@@ -307,18 +302,14 @@ Object.assign(stateNode("TX"), {
       children: [
         node({
           id: "tx-sugarland",
+          geoid: "4870808",
           name: "Sugar Land",
           level: "city",
           center: [-95.6349, 29.6197],
           zoom: 11.6,
           bbox: [-95.7, 29.51, -95.58, 29.66],
           races: [
-            makeHouseRace("TX-22"),
             makeMayorRace("Sugar Land"),
-            makeSchoolBoardRace(
-              "Fort Bend ISD Board of Trustees",
-              "the Fort Bend Independent School District"
-            ),
           ],
           events: [
             makeEvent({
@@ -366,16 +357,26 @@ Object.assign(stateNode("NY"), {
   races: [makeGovernorRace("New York")],
   children: [
     node({
-      id: "ny-nyc",
-      name: "New York City",
-      level: "city",
-      aliases: ["new york", "city of new york", "nyc"],
-      center: [-74.006, 40.7128],
-      zoom: 10,
-      bbox: [-74.26, 40.49, -73.7, 40.92],
-      races: [
-        makeMayorRace("New York City"),
-        makeSchoolBoardRace("NYC Panel for Educational Policy", "the New York City public schools"),
+      id: "ny-newyork",
+      geoid: "36061",
+      name: "New York County",
+      aliases: ["manhattan"],
+      level: "county",
+      center: [-73.97, 40.78],
+      zoom: 11,
+      bbox: [-74.02, 40.7, -73.91, 40.88],
+      children: [
+        node({
+          id: "ny-nyc",
+          geoid: "3651000",
+          name: "New York",
+          level: "city",
+          aliases: ["new york city", "city of new york", "nyc"],
+          center: [-74.006, 40.7128],
+          zoom: 10,
+          bbox: [-74.26, 40.49, -73.7, 40.92],
+          races: [makeMayorRace("New York City")],
+        }),
       ],
     }),
   ],
@@ -388,6 +389,7 @@ Object.assign(stateNode("CA"), {
   children: [
     node({
       id: "ca-sf",
+      geoid: "06075",
       name: "San Francisco County",
       level: "county",
       center: [-122.44, 37.76],
@@ -402,9 +404,7 @@ Object.assign(stateNode("CA"), {
           zoom: 11.5,
           bbox: [-122.52, 37.7, -122.35, 37.83],
           races: [
-            makeHouseRace("CA-11"),
             makeMayorRace("San Francisco"),
-            makeSchoolBoardRace("San Francisco Board of Education", "San Francisco's public schools"),
           ],
         }),
       ],
@@ -422,6 +422,16 @@ function register(n, parent = null) {
   for (const child of n.children) register(child, n);
 }
 register(PLACES);
+
+// Which layer of government a place level corresponds to (for races/events
+// that don't say so explicitly).
+const LEVEL_TO_KIND = {
+  country: "country",
+  state: "state",
+  county: "county",
+  city: "city",
+  district: "ward",
+};
 
 // ----- Lookup helpers -------------------------------------------------------
 
@@ -465,7 +475,12 @@ export function racesForNode(id) {
   const out = [];
   for (const n of pathToNode(id)) {
     for (const race of n.races) {
-      out.push({ ...race, scopeName: n.name, scopeLevel: n.level });
+      out.push({
+        ...race,
+        kind: race.kind || LEVEL_TO_KIND[n.level],
+        scopeName: n.name,
+        scopeLevel: n.level,
+      });
     }
   }
   return out;
@@ -480,7 +495,12 @@ export function eventsForNode(id, now = new Date()) {
         ? new Date(evt.end)
         : new Date(new Date(evt.start).getTime() + 3 * 3600 * 1000);
       if (endsAt < now) continue; // already over
-      out.push({ ...evt, scopeName: n.name, scopeLevel: n.level });
+      out.push({
+        ...evt,
+        kind: evt.kind || LEVEL_TO_KIND[n.level],
+        scopeName: n.name,
+        scopeLevel: n.level,
+      });
     }
   }
   out.sort((a, b) => new Date(a.start) - new Date(b.start));
@@ -563,6 +583,101 @@ function addDynamicChild(parent, fields) {
   parent.children.push(child);
   INDEX.set(child.id, child);
   return child;
+}
+
+// ----- Census-backed children (every county, every city) ---------------------
+//
+// Counties and cities are NOT bundled. They are loaded from the Census Bureau
+// the first time someone opens a state or county (see loadChildren in
+// data/civic.js) and added to the tree here. Curated nodes above are reused
+// (matched by Census id, then by name) so their sample races/events stay.
+
+function findChildByGeoid(parent, geoid) {
+  return parent.children.find((c) => c.geoid === geoid) || null;
+}
+
+// Find-or-create a child. `item`: { geoid, name, center, type?, layer? }.
+function upsertChild(parent, item, level) {
+  let child =
+    findChildByGeoid(parent, item.geoid) ||
+    findChild(parent, item.name, level, null);
+  if (child) {
+    if (!child.geoid) child.geoid = item.geoid;
+    if (item.layer) child.layer = item.layer;
+    if (item.type) child.type = item.type;
+    return child;
+  }
+  // Ids must be unique tree-wide. A city that sits in several counties (New
+  // York City) gets one node per county.
+  let id = `${level}:${item.geoid}`;
+  if (INDEX.has(id)) id = `${id}@${parent.id}`;
+  child = node({
+    id,
+    geoid: item.geoid,
+    name: item.name,
+    level,
+    center: item.center,
+    layer: item.layer,
+    type: item.type,
+    dynamic: true,
+  });
+  child.parent = parent;
+  parent.children.push(child);
+  INDEX.set(child.id, child);
+  return child;
+}
+
+/**
+ * Add a batch of children loaded from the Census to a node.
+ * @param {object} parent
+ * @param {{geoid: string, name: string, center: number[], type?: string, layer?: string}[]} items
+ * @param {"county"|"city"} level
+ */
+export function attachChildren(parent, items, level) {
+  const nodes = items.map((it) => upsertChild(parent, it, level));
+  parent.childrenState = "loaded";
+  return nodes;
+}
+
+/**
+ * Turn a stack of jurisdictions (data/census.js) into a path of place nodes,
+ * creating county / city nodes as needed.
+ * @param {object[]} stack
+ * @param {"state"|"county"|"city"} [downTo]  deepest level to go to
+ * @returns {object[]} path from Earth down; just [Earth] if not in the U.S.
+ */
+export function pathFromStack(stack, downTo = "city") {
+  const stateJ = stack.find((j) => j.kind === "state");
+  const state = stateJ && usa.children.find((s) => s.code === stateJ.short);
+  if (!state) return [PLACES];
+  const path = [PLACES, usa, state];
+  if (downTo === "state") return path;
+
+  const countyJ = stack.find((j) => j.kind === "county");
+  if (!countyJ) return path;
+  const county = upsertChild(
+    state,
+    { geoid: countyJ.geoid, name: countyJ.name, center: countyJ.center, layer: "counties" },
+    "county"
+  );
+  path.push(county);
+  if (downTo === "county") return path;
+
+  const cityJ = stack.find((j) => j.kind === "city");
+  if (!cityJ) return path;
+  const city = upsertChild(
+    county,
+    {
+      geoid: cityJ.geoid,
+      name: cityJ.name,
+      center: cityJ.center,
+      type: cityJ.type,
+      layer: cityJ.layer,
+    },
+    "city"
+  );
+  path.push(city);
+  return path;
 }
 
 // Show "Fort Bend County" rather than "Fort Bend" for U.S. counties.
