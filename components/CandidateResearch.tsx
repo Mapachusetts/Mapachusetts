@@ -11,6 +11,7 @@ import {
 import CitedText from "@/components/CitedText";
 import { formatDate } from "@/lib/format";
 import type {
+  CandidateStatus,
   CandidateView,
   Funding,
   FundingSource,
@@ -21,6 +22,7 @@ import type {
   ResearchSource,
   SourceBias,
   SourceType,
+  StatusType,
   SubIssue,
 } from "@/lib/types";
 
@@ -349,7 +351,11 @@ export default function CandidateResearch({
             <FundingPanel funding={selected.funding} />
           </TabPanel>
           <TabPanel id="career" active={tab}>
-            <CareerPanel bio={selected.bio} career={selected.career} />
+            <CareerPanel
+              bio={selected.bio}
+              status={selected.status}
+              career={selected.career}
+            />
           </TabPanel>
           <TabPanel id="opinions" active={tab}>
             <IssuesPanel opinions={selected.opinions} />
@@ -447,22 +453,58 @@ function WhyItMatters({ text }: { text: string }) {
   );
 }
 
+/** Official photo, falling back to party-colored initials if it fails to load. */
+function Avatar({ c, party }: { c: CandidateView; party: string }) {
+  const [failed, setFailed] = useState(false);
+  const photo = safeUrl(c.photo);
+
+  if (photo && !failed) {
+    return (
+      <div className="profile-avatar has-photo" data-party={party}>
+        {/* Plain <img>: remote portrait, no next/image domain config needed. */}
+        <img
+          src={photo}
+          alt={`Official photo of ${c.name}`}
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-avatar" data-party={party} aria-hidden="true">
+      {initials(c.name)}
+    </div>
+  );
+}
+
 function ProfileHeader({ c }: { c: CandidateView }) {
   const party = partyKey(c.party);
   const openSecrets = safeUrl(c.openSecretsUrl);
   return (
     <div className="profile-header">
-      <div className="profile-avatar" data-party={party} aria-hidden="true">
-        {initials(c.name)}
-      </div>
+      <Avatar c={c} party={party} />
       <div className="profile-meta">
         <h3>{c.name}</h3>
         {c.role && <p className="profile-role">{c.role}</p>}
-        {c.party && (
-          <span className="profile-party" data-party={party}>
-            {c.party}
-          </span>
+        {(c.party || c.status) && (
+          <div className="profile-badges">
+            {c.party && (
+              <span className="profile-party" data-party={party}>
+                {c.party}
+              </span>
+            )}
+            {c.status && (
+              <span
+                className="profile-status-badge"
+                data-status-type={c.status.statusType}
+              >
+                {c.status.statusLabel}
+              </span>
+            )}
+          </div>
         )}
+        {c.status?.termInfo && <p className="profile-term">{c.status.termInfo}</p>}
       </div>
       {openSecrets && (
         <a
@@ -646,19 +688,74 @@ function FundingPanel({ funding }: { funding: Funding | null }) {
 
 // ── Tab 3: Career ─────────────────────────────────────────
 
+const STATUS_ICONS: Record<StatusType, string> = {
+  incumbent: "🏛️",
+  running: "🗳️",
+  former: "📋",
+};
+
+/** Current-office summary at the top of the Career tab. */
+function StatusCard({ status }: { status: CandidateStatus }) {
+  const committees = status.committees ?? [];
+  return (
+    <div className="status-card">
+      <div className="status-card-header">
+        <span className="status-type-icon" aria-hidden="true">
+          {STATUS_ICONS[status.statusType]}
+        </span>
+        <div>
+          <div className="status-title">
+            {status.currentTitle} — {status.state}
+          </div>
+          <div className="status-term">{status.termInfo}</div>
+        </div>
+        <span className="status-badge-large" data-status-type={status.statusType}>
+          {status.statusLabel}
+        </span>
+      </div>
+
+      <div className="plain-english-box">
+        <span className="box-label">What this means</span>
+        <p>{status.plainEnglish}</p>
+      </div>
+
+      {status.runningFor && (
+        <div className="status-running">
+          <span className="status-section-label">Running for</span>
+          <strong>{status.runningFor}</strong>
+        </div>
+      )}
+
+      {committees.length > 0 && (
+        <div className="status-committees">
+          <span className="status-section-label">Committee Assignments</span>
+          <ul>
+            {committees.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CareerPanel({
   bio,
+  status,
   career,
 }: {
   bio: string | null;
+  status: CandidateStatus | null;
   career: ProfileCareerEntry[];
 }) {
-  if (!bio && career.length === 0) {
+  if (!bio && !status && career.length === 0) {
     return <TabEmpty>Career history hasn&apos;t been added for this candidate yet.</TabEmpty>;
   }
 
   return (
     <>
+      {status && <StatusCard status={status} />}
       {bio && <p className="profile-bio">{bio}</p>}
       {career.length > 0 && (
         <>

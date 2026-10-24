@@ -356,7 +356,8 @@ body {
 }
 
 .profile-avatar {
-  width: 60px; height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
@@ -366,24 +367,157 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .profile-avatar[data-party="republican"] { background: #dc2626; }
 .profile-avatar[data-party="independent"] { background: #7c3aed; }
 
+/* Photo state */
+.profile-avatar.has-photo {
+  background: #e5e7eb;
+  padding: 0;
+}
+
+.profile-avatar.has-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
 .profile-meta { flex: 1; min-width: 160px; }
 .profile-meta h3 { font-size: 1.3rem; margin-bottom: 0.2rem; }
 .profile-role { color: var(--muted); font-size: 0.9rem; }
 
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  align-items: center;
+}
+
 .profile-party {
   display: inline-block;
-  margin-top: 0.4rem;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
   background: #dbeafe;
   color: #1e40af;
+}
+
+/* Status badge in header */
+.profile-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.profile-status-badge[data-status-type="incumbent"] { background: #dcfce7; color: #15803d; }
+.profile-status-badge[data-status-type="running"]   { background: #fef9c3; color: #854d0e; }
+.profile-status-badge[data-status-type="former"]    { background: #f3f4f6; color: #6b7280; }
+
+.profile-term {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+
+/* ─────────────────────────────────────────────
+   Status Card (Career tab)
+───────────────────────────────────────────── */
+.status-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f9fafb;
+  padding: 1.25rem;
+}
+
+.status-card[hidden] { display: none; }
+
+.status-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.status-type-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.status-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.status-term {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  line-height: 1.5;
+}
+
+.status-badge-large {
+  margin-left: auto;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.status-badge-large[data-status-type="incumbent"] { background: #dcfce7; color: #15803d; }
+.status-badge-large[data-status-type="running"]   { background: #fef9c3; color: #854d0e; }
+.status-badge-large[data-status-type="former"]    { background: #f3f4f6; color: #6b7280; }
+
+.status-running {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.status-committees {
+  margin-top: 0.85rem;
+}
+
+.status-section-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.status-committees ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+}
+
+.status-committees li {
+  font-size: 0.78rem;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 500;
 }
 
 .profile-source-link {
@@ -1162,6 +1296,10 @@ section[id] { scroll-margin-top: var(--nav-height); }
 }
 
 .legend-gap { margin-left: 0.75rem; }
+
+/* Status card spacing (replaces candidate-search's inline styles) */
+.status-card { margin-bottom: 1.5rem; }
+.status-card .plain-english-box { margin: 0.75rem 0 0; }
 
 /* Browse chips under the empty search state */
 .candidate-browse {

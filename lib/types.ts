@@ -140,12 +140,32 @@ export interface Misconception {
   sourceUrl: string;
 }
 
+export type StatusType = "incumbent" | "running" | "former";
+
+/** Current-office status shown in the profile header and Career tab. */
+export interface CandidateStatus {
+  currentTitle: string;
+  state: string;
+  statusType: StatusType;
+  /** Short badge text, e.g. "Currently serving". */
+  statusLabel: string;
+  termInfo: string;
+  nextElection?: string | null;
+  /** Office they're campaigning for, or null if not in an active race. */
+  runningFor: string | null;
+  committees?: string[];
+  plainEnglish: string;
+}
+
 /** Hand-curated research profile, keyed by the politician's slug. */
 export interface CandidateProfile {
   slug: string;
   name: string;
   role: string;
   party: string;
+  /** Official portrait URL. */
+  photo?: string;
+  status?: CandidateStatus;
   openSecretsUrl?: string;
   funding?: Funding;
   career?: ProfileCareerEntry[];
@@ -161,6 +181,8 @@ export interface CandidateView {
   role: string;
   party: string;
   bio: string | null;
+  photo: string | null;
+  status: CandidateStatus | null;
   openSecretsUrl: string | null;
   career: ProfileCareerEntry[];
   funding: Funding | null;

@@ -35,7 +35,26 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
     name: "Elizabeth Warren",
     role: "U.S. Senator, Massachusetts",
     party: "Democrat",
+    photo: "https://bioguide.congress.gov/bioguide/photo/W/W000817.jpg",
     openSecretsUrl: "https://www.opensecrets.org/members-of-congress/elizabeth-warren/summary?cid=N00033492",
+
+    /* ── CURRENT STATUS ──────────────────────── */
+    status: {
+      currentTitle: "U.S. Senator",
+      state: "Massachusetts",
+      statusType: "incumbent",          // "incumbent" | "running" | "former"
+      statusLabel: "Currently serving", // shown as a badge
+      termInfo: "Serving since 2013. Up for re-election in 2026.",
+      nextElection: "2026",
+      runningFor: null,                 // null if not in active race
+      committees: [
+        "Senate Banking, Housing & Urban Affairs",
+        "Senate Finance",
+        "Senate Armed Services",
+        "Special Committee on Aging",
+      ],
+      plainEnglish: "Warren is a sitting U.S. Senator — she was elected in 2012 and re-elected in 2018. Her current term runs until January 2025, and she is up for re-election in 2026. As a senator she votes on every federal law, from healthcare to the defense budget.",
+    },
 
     /* ── FUNDING ─────────────────────────────── */
     funding: {
@@ -352,6 +371,79 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
       },
 
       /* ── PUBLIC SAFETY ───────────────── */
+      /* ── PUBLIC INFRASTRUCTURE ───────────── */
+      {
+        id: "infrastructure",
+        topic: "Public Infrastructure",
+        icon: "🚇",
+        subIssues: [
+          {
+            id: "public-transit",
+            label: "Public Transportation",
+            plainEnglish: "Warren supports major federal investment in buses, subways, commuter rail, and passenger trains — particularly for cities like Boston where the MBTA serves hundreds of thousands of people daily. She believes reliable transit is an economic issue, not just a convenience.",
+            whyItMatters: "The MBTA has faced years of delays, derailments, and service cuts that directly affect how Massachusetts residents get to work, school, and healthcare. 'MBTA fix' and 'Green Line Extension' have been top local searches. People want to know if federal representatives are fighting for transit funding.",
+            alignment: 88,
+            stance: "Strongly supports federal funding for public transit modernization and expansion.",
+            detail: "Backed the Infrastructure Investment and Jobs Act (2021), which included $39 billion for public transit — the largest federal transit investment in history. Specifically supported MBTA funding and commuter rail upgrades in Massachusetts. Advocates for expanding Amtrak service on the Northeast Corridor and creating reliable intercity rail as a climate-friendly alternative to flying.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act", year: 2021, vote: "Yes" },
+              { bill: "Amtrak Improvement Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "roads-bridges",
+            label: "Roads, Bridges & Highway Safety",
+            plainEnglish: "Massachusetts has thousands of structurally deficient bridges and roads rated in poor condition. Warren backed the bipartisan infrastructure law that sent billions to states for repairs — money that directly funds Massachusetts road projects.",
+            whyItMatters: "Potholes, bridge closures, and construction delays are everyday frustrations. After bridge collapses in other states made national news, people started searching 'how many bridges in Massachusetts are unsafe' and what their representatives are doing about it.",
+            alignment: 80,
+            stance: "Supports federal highway and bridge repair funding through the bipartisan infrastructure law.",
+            detail: "Voted for the Infrastructure Investment and Jobs Act, which allocated $110 billion for roads and bridges nationwide. Massachusetts received over $1.2 billion in formula highway funding in the first year. Supports complete streets policies that make roads safer for pedestrians and cyclists alongside drivers.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "broadband",
+            label: "Broadband & Internet Access",
+            plainEnglish: "Millions of Americans — including people in rural Massachusetts and low-income urban neighborhoods — still don't have reliable high-speed internet at home. Warren backed a $65 billion federal program to connect everyone, and wants to keep internet prices affordable once they're connected.",
+            whyItMatters: "After COVID exposed that students without home internet fell behind, broadband access became a defining equity issue. People are searching 'free internet programs Massachusetts' and 'why is my internet so expensive' — and connecting both to what Congress is funding.",
+            alignment: 88,
+            stance: "Supports universal broadband deployment and affordable pricing rules.",
+            detail: "Backed the $65 billion broadband provisions of the Infrastructure Investment and Jobs Act. Supports the Affordable Connectivity Program (ACP), which provided $30/month internet subsidies to low-income households. Advocates for municipal broadband options and stronger FCC oversight of ISP pricing practices.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (broadband)", year: 2021, vote: "Yes" },
+              { bill: "Affordable Connectivity Program Extension Act", year: 2024, vote: "Yes" },
+            ],
+          },
+          {
+            id: "water-systems",
+            label: "Water & Sewer Infrastructure",
+            plainEnglish: "Thousands of Massachusetts homes — disproportionately in older cities like Lynn, Chelsea, and Springfield — still receive water through lead pipes. Warren backed federal money to replace them, arguing clean water is a basic right, not a luxury.",
+            whyItMatters: "The Flint, Michigan water crisis brought lead pipes into national consciousness. Massachusetts has its own aging water systems. Parents are searching 'lead pipes in my city' and 'how do I know if my water is safe' — and looking for who in Congress secured the funding to fix it.",
+            alignment: 85,
+            stance: "Supports federal investment in lead pipe removal and water system upgrades.",
+            detail: "The Infrastructure Investment and Jobs Act included $55 billion for water and wastewater systems — the largest federal water investment in U.S. history. Warren voted yes. Specifically backed provisions to replace all lead service lines within 10 years. Massachusetts received hundreds of millions for drinking water and clean water state revolving funds.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (water)", year: 2021, vote: "Yes" },
+              { bill: "Water Infrastructure Finance Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "airports-ports",
+            label: "Airports & Ports",
+            plainEnglish: "Logan Airport and the Port of Boston are economic engines for Massachusetts. Warren supported federal grants to modernize airport terminals and freight infrastructure — which affects both passenger travel and the price of goods that come through Boston Harbor.",
+            whyItMatters: "Post-COVID flight chaos, supply chain disruptions, and rising shipping costs have put airports and ports in the news. People are searching 'why are flights so delayed' and 'what caused the supply chain crisis' — both trace back in part to underfunded port and air infrastructure.",
+            alignment: 74,
+            stance: "Supports federal airport modernization grants and port infrastructure investment.",
+            detail: "The Infrastructure Investment and Jobs Act included $25 billion for airports and $17 billion for ports and waterways. Warren supported this funding. Specifically backed FAA reauthorization provisions that address runway safety and terminal upgrades. Supports investments in zero-emission ground vehicles at airports and electrification of port equipment.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (airports/ports)", year: 2021, vote: "Yes" },
+              { bill: "FAA Reauthorization Act", year: 2023, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
       {
         id: "public-safety",
         topic: "Public Safety",
@@ -382,6 +474,262 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
             voteRecord: [
               { bill: "George Floyd Justice in Policing Act", year: 2021, vote: "Yes" },
               { bill: "EQUAL Act (drug sentencing reform)", year: 2021, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── ECONOMY & WORKERS ───────────── */
+      {
+        id: "economy",
+        topic: "Economy & Workers",
+        icon: "💼",
+        subIssues: [
+          {
+            id: "minimum-wage",
+            label: "Minimum Wage",
+            plainEnglish: "Warren supports raising the federal minimum wage to $15/hour — arguing that working full time should be enough to cover rent and basic expenses. Massachusetts already has a higher state minimum, but millions of workers in other states still earn the federal floor of $7.25.",
+            whyItMatters: "The federal minimum wage hasn't been raised since 2009. 'Minimum wage Massachusetts' and 'living wage calculator' are consistently searched by workers trying to understand if what they earn is enough to get by in cities like Boston.",
+            alignment: 92,
+            stance: "Strongly supports raising the federal minimum wage to $15/hour.",
+            detail: "Co-sponsored the Raise the Wage Act, which would gradually raise the federal minimum wage from $7.25 to $15/hour. Argues the current minimum wage has lost significant purchasing power due to inflation. Supports indexing the minimum wage to inflation so it automatically keeps pace with rising costs.",
+            voteRecord: [
+              { bill: "Raise the Wage Act", year: 2021, vote: "Yes" },
+              { bill: "Minimum Wage Fairness Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "workers-rights",
+            label: "Union Rights & Collective Bargaining",
+            plainEnglish: "Unions are organizations workers form to negotiate together for better pay and conditions. Warren strongly supports the legal right to unionize — and backed legislation that would make it easier for workers at companies like Amazon and Starbucks to form unions.",
+            whyItMatters: "The wave of union drives at Amazon warehouses, Starbucks locations, and hospitals — including several in Massachusetts — has made labor rights front-page news. People are searching 'how do I start a union at work' and 'can my employer fire me for unionizing.'",
+            alignment: 90,
+            stance: "Strongly supports union rights and the PRO Act to strengthen collective bargaining.",
+            detail: "Backed the Protecting the Right to Organize (PRO) Act, the most significant pro-union federal legislation in decades. Supports banning mandatory anti-union meetings by employers. Advocates for sectoral bargaining that would allow unions to negotiate industry-wide standards rather than just company by company.",
+            voteRecord: [
+              { bill: "PRO Act (Protecting the Right to Organize)", year: 2021, vote: "Yes" },
+              { bill: "Public Service Freedom to Negotiate Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "gig-economy",
+            label: "Gig Workers & Job Classification",
+            plainEnglish: "Gig workers — Uber drivers, DoorDash couriers, TaskRabbit contractors — are classified as 'independent contractors' rather than employees, which means they don't get benefits like health insurance, overtime pay, or unemployment. Warren wants federal rules to reclassify many of them as employees.",
+            whyItMatters: "Massachusetts has been a battleground for gig worker classification laws. Millions of Americans depend on gig work as a primary income. People are searching 'am I an employee or contractor' and 'do gig workers get benefits' — and state courts keep changing the answer.",
+            alignment: 82,
+            stance: "Supports stronger federal standards to classify gig workers as employees when appropriate.",
+            detail: "Backs enforcing the ABC test for worker classification — which presumes workers are employees unless proven otherwise. Supports extending labor protections to gig workers including overtime, unemployment insurance, and the right to organize. Has pushed back on tech companies lobbying to exempt their platforms from worker protection laws.",
+            voteRecord: [
+              { bill: "Worker Organizing and Protection Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "inflation-cost-of-living",
+            label: "Inflation & Cost of Living",
+            plainEnglish: "Inflation hit a 40-year high in 2022, making groceries, gas, and rent dramatically more expensive. Warren argues that corporate price-gouging — companies raising prices beyond their actual costs — made inflation worse, and supports antitrust action and windfall profit taxes to address it.",
+            whyItMatters: "'Why is everything so expensive' was the most-searched economic question of 2022–2024. Grocery prices, rent, and gas costs are still elevated. People want to know if their senator blames corporations, supply chains, or government spending — and what they're doing about it.",
+            alignment: 78,
+            stance: "Supports tackling corporate price-gouging and windfall profits alongside inflation.",
+            detail: "Introduced the Price Gouging Prevention Act, which would allow the FTC to investigate and penalize corporations that raise prices excessively during emergencies. Argues the Inflation Reduction Act's prescription drug price negotiation was a direct win against pharmaceutical price gouging. Supports antitrust enforcement as a tool to restore market competition and lower prices.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act", year: 2022, vote: "Yes" },
+              { bill: "Price Gouging Prevention Act", year: 2022, vote: "Sponsored" },
+            ],
+          },
+          {
+            id: "small-business",
+            label: "Small Business Support",
+            plainEnglish: "Warren supports easier access to small business loans, stronger antitrust enforcement to prevent giant corporations from crushing local competitors, and protections for small businesses from predatory practices by platforms like Amazon.",
+            whyItMatters: "Small businesses make up the backbone of Massachusetts's economy — from restaurants in Worcester to boutiques on Newbury Street. After COVID shutdowns and supply chain struggles, small business owners are searching for relief, fair lending, and protection from corporate consolidation.",
+            alignment: 80,
+            stance: "Supports small business access to capital and antitrust protection from big corporate competition.",
+            detail: "Backed the Small Business Administration COVID relief programs. Supports the American Innovation and Choice Online Act, which would prevent dominant platforms like Amazon from favoring their own products over small-business sellers. Advocates for expanding the Community Reinvestment Act to ensure local banks serve small businesses.",
+            voteRecord: [
+              { bill: "American Rescue Plan (small business provisions)", year: 2021, vote: "Yes" },
+              { bill: "American Innovation and Choice Online Act", year: 2022, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── ENVIRONMENT & CLIMATE ───────── */
+      {
+        id: "environment",
+        topic: "Environment & Climate",
+        icon: "🌱",
+        subIssues: [
+          {
+            id: "climate-emissions",
+            label: "Climate Change & Emissions",
+            plainEnglish: "Warren believes climate change is a real and urgent threat driven by human activity — specifically burning fossil fuels. She backed major legislation that invested $369 billion in clean energy and emissions reduction, the largest climate investment in U.S. history.",
+            whyItMatters: "Extreme heat waves, wildfires, flooding, and rising sea levels on the Massachusetts coast are becoming more frequent and more severe. People are searching 'climate change Massachusetts coast' and 'sea level rise Boston' — and looking for who is actually legislating on it.",
+            alignment: 93,
+            stance: "Strongly supports aggressive emissions reduction targets and clean energy investment.",
+            detail: "Voted for the Inflation Reduction Act (2022), which includes $369 billion in climate and clean energy investments — the single largest climate action in U.S. history. Supports rejoining and strengthening Paris Agreement commitments. Backs net-zero emissions by 2050 with interim 2030 targets. Has specifically pushed for Environmental Justice provisions ensuring frontline communities benefit from clean energy transition.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act", year: 2022, vote: "Yes" },
+              { bill: "Clean Energy Innovation and Deployment Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "offshore-wind",
+            label: "Offshore Wind & Renewable Energy",
+            plainEnglish: "Massachusetts has some of the best offshore wind potential in the world. Warren backed federal investment in offshore wind energy — which would create thousands of Massachusetts jobs and reduce reliance on fossil fuels.",
+            whyItMatters: "Vineyard Wind and other offshore wind projects off Cape Cod and the South Coast are major local debates, involving fishing communities, coastal residents, and energy workers. People are searching 'offshore wind jobs Massachusetts' and 'Vineyard Wind status' — it's a live economic and environmental story.",
+            alignment: 88,
+            stance: "Supports offshore wind expansion and federal permitting reform to accelerate deployment.",
+            detail: "Backed offshore wind leasing in the Inflation Reduction Act. Supports streamlining federal permitting for clean energy projects. Advocates for buy-American provisions in offshore wind supply chains to create domestic manufacturing jobs. Has worked to ensure fishing communities have a voice in offshore wind siting decisions.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (offshore wind)", year: 2022, vote: "Yes" },
+              { bill: "BUILD GREEN Infrastructure and Jobs Act", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "environmental-justice",
+            label: "Environmental Justice",
+            plainEnglish: "Environmental justice means that low-income communities and communities of color — who often live near highways, power plants, and industrial facilities — shouldn't bear a disproportionate share of pollution. Warren backs policies that specifically target cleanup and investment in these communities.",
+            whyItMatters: "Chelsea, East Boston, Roxbury, and Lawrence are among the most pollution-burdened communities in Massachusetts. Residents near highways and the Mystic River report higher rates of asthma and cardiovascular disease. People in these communities are searching for accountability and action.",
+            alignment: 90,
+            stance: "Strongly supports environmental justice investment in frontline communities.",
+            detail: "Supported the Environmental Justice for All Act. Backs the White House Justice40 initiative, which directs 40% of federal clean energy and infrastructure benefits to disadvantaged communities. Has pushed EPA to enforce air quality standards in communities near industrial polluters. Supports Superfund site cleanup in Massachusetts.",
+            voteRecord: [
+              { bill: "Environmental Justice for All Act", year: 2021, vote: "Yes" },
+              { bill: "Inflation Reduction Act (EJ provisions)", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "fossil-fuels",
+            label: "Oil, Gas & Fossil Fuel Policy",
+            plainEnglish: "Warren opposes expanding new oil and gas drilling on federal lands and offshore, and wants to end federal subsidies — tax breaks and direct payments — that the government currently gives to fossil fuel companies.",
+            whyItMatters: "Gas prices spiking in 2022 made energy policy a dinner-table conversation. At the same time, floods and wildfires made fossil fuel dependence a safety issue. People are searching 'why does gas cost so much' and 'oil company profits' — and connecting both to federal policy.",
+            alignment: 85,
+            stance: "Opposes new fossil fuel drilling and supports ending oil and gas subsidies.",
+            detail: "Backed the End Polluter Welfare Act, which would eliminate approximately $150 billion in federal subsidies and tax breaks for fossil fuel companies over 10 years. Opposes new oil and gas leasing on federal public lands. Supports a fee on methane emissions from oil and gas production.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (methane fee)", year: 2022, vote: "Yes" },
+              { bill: "End Polluter Welfare Act", year: 2021, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── TAXES & GOVERNMENT SPENDING ──── */
+      {
+        id: "taxes",
+        topic: "Taxes & Government Spending",
+        icon: "💰",
+        subIssues: [
+          {
+            id: "wealth-tax",
+            label: "Wealth Tax & Corporate Taxes",
+            plainEnglish: "Warren famously proposed a 2% annual tax on fortunes above $50 million — what she calls the 'Ultra-Millionaire Tax.' She also supports raising the corporate tax rate, arguing that wealthy individuals and large corporations have benefited most from tax cuts while middle-class workers bear a higher relative burden.",
+            whyItMatters: "Wealth inequality in the U.S. has hit record levels. People are searching 'wealth tax explained,' 'why don't billionaires pay taxes,' and 'why is the middle class shrinking' — and looking for elected officials who are actually proposing structural fixes.",
+            alignment: 96,
+            stance: "Strongly supports a wealth tax on fortunes above $50M and raising corporate tax rates.",
+            detail: "Introduced the Ultra-Millionaire Tax Act, which would levy a 2% annual tax on fortunes above $50 million and 3% on those above $1 billion — estimated to raise $3 trillion over 10 years. Backed the Inflation Reduction Act's 15% corporate minimum tax. Supports reversing the 2017 Tax Cuts and Jobs Act's reduction in the corporate tax rate from 35% to 21%.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (corporate minimum tax)", year: 2022, vote: "Yes" },
+              { bill: "Ultra-Millionaire Tax Act", year: 2021, vote: "Sponsored" },
+            ],
+          },
+          {
+            id: "social-security",
+            label: "Social Security & Medicare",
+            plainEnglish: "Social Security and Medicare are the safety net programs that provide income and healthcare to retirees and disabled Americans. Warren opposes any cuts to these programs and wants to expand Social Security benefits by raising taxes on high earners.",
+            whyItMatters: "Social Security is projected to face funding shortfalls around 2033–2035 if no changes are made. Millions of Massachusetts seniors depend on it. 'Is Social Security going bankrupt' and 'will I get my Social Security' are consistently high-search questions among people over 50.",
+            alignment: 94,
+            stance: "Opposes cuts to Social Security and Medicare. Supports expanding benefits.",
+            detail: "Co-sponsored the Social Security Expansion Act, which would expand benefits by approximately $2,400/year for recipients by applying Social Security taxes to income above $250,000. Opposes raising the retirement age. Supports allowing Medicare to negotiate prescription drug prices — a provision included in the Inflation Reduction Act.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (Medicare drug pricing)", year: 2022, vote: "Yes" },
+              { bill: "Social Security Expansion Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "deficit-spending",
+            label: "Federal Budget & Deficit",
+            plainEnglish: "The federal government spends more than it takes in — that's the deficit. Warren believes the U.S. should invest in people and infrastructure now while paying for it by taxing the wealthy, rather than cutting programs that millions depend on.",
+            whyItMatters: "Debt ceiling crises, potential government shutdowns, and battles over government spending are a recurring part of the news cycle. People search 'what is the national debt' and 'what happens if the U.S. defaults' — and want to know where their senator stands when these fights come to a head.",
+            alignment: 60,
+            stance: "Supports offsetting new spending with taxes on wealthy individuals and corporations.",
+            detail: "Backed the Inflation Reduction Act partly because it was projected to reduce the deficit by $300 billion over 10 years through new taxes on corporations and high earners. Opposes spending cuts to social programs as a deficit-reduction tool. Has supported pay-for-it rules that require new spending to be offset with new revenue.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (deficit provisions)", year: 2022, vote: "Yes" },
+              { bill: "Debt Ceiling Responsibility Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "drug-pricing",
+            label: "Prescription Drug Prices",
+            plainEnglish: "The U.S. pays far more for the same drugs than any other country. Warren backed allowing Medicare — which covers 65+ million Americans — to negotiate drug prices directly with pharmaceutical companies, the same way private insurers in other countries do.",
+            whyItMatters: "'Why are prescription drugs so expensive in the US' is one of the most-searched healthcare questions in America. Insulin prices alone have dominated political debate for years. People want to know who fought for the insulin price cap and drug negotiation — and who opposed it.",
+            alignment: 95,
+            stance: "Strongly supports Medicare drug price negotiation and prescription drug cost caps.",
+            detail: "The Inflation Reduction Act — which Warren voted for — gave Medicare the power to negotiate drug prices for the first time in history and capped insulin at $35/month for Medicare patients. Warren has pushed to expand these negotiations to more drugs faster and extend the insulin cap to all Americans, not just Medicare patients.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (drug pricing)", year: 2022, vote: "Yes" },
+              { bill: "Insulin Price Reduction Act", year: 2023, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── TECHNOLOGY & PRIVACY ────────── */
+      {
+        id: "technology",
+        topic: "Technology & Privacy",
+        icon: "💻",
+        subIssues: [
+          {
+            id: "ai-regulation",
+            label: "Artificial Intelligence Regulation",
+            plainEnglish: "AI tools like ChatGPT, hiring algorithms, and facial recognition are changing how people get jobs, access credit, and interact with government. Warren supports guardrails to make sure AI systems are accurate, transparent, and can't discriminate — especially in high-stakes decisions.",
+            whyItMatters: "AI regulation is one of the fastest-growing search topics in American politics. People are asking 'can AI be used to hire or fire me,' 'is my face being scanned without permission,' and 'who regulates AI' — as these tools enter workplaces, courtrooms, and schools.",
+            alignment: 78,
+            stance: "Supports federal AI accountability standards, especially for high-stakes decision-making.",
+            detail: "Backed the Algorithmic Accountability Act, which would require companies to audit automated systems for bias and accuracy. Supports transparency requirements for AI used in credit, hiring, housing, and criminal justice. Has raised concerns about AI-generated deepfakes and their impact on elections. Advocates for FTC authority to regulate harmful AI applications.",
+            voteRecord: [
+              { bill: "Algorithmic Accountability Act", year: 2022, vote: "Yes" },
+              { bill: "AI Accountability Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "data-privacy",
+            label: "Data Privacy & Surveillance",
+            plainEnglish: "Every app, website, and device you use collects data about you. Warren supports a federal privacy law giving Americans the right to know what's collected, opt out of data sales, and sue companies that misuse their information. She also wants limits on government surveillance.",
+            whyItMatters: "Data broker scandals, location tracking revelations, and stories about companies selling mental health data have made digital privacy a mainstream concern. 'Who has my data' and 'can I delete my data from the internet' are consistently high-search questions — and there's no federal law yet.",
+            alignment: 85,
+            stance: "Supports comprehensive federal data privacy law and limits on government surveillance.",
+            detail: "Backed the American Data Privacy and Protection Act (ADPPA), which would create baseline federal privacy rights for all Americans. Supports data minimization rules that prohibit companies from collecting more data than necessary. Has pushed for limits on bulk government data collection without warrants, particularly through the Section 702 surveillance program.",
+            voteRecord: [
+              { bill: "American Data Privacy and Protection Act", year: 2022, vote: "Yes" },
+              { bill: "Fourth Amendment Is Not For Sale Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "big-tech-antitrust",
+            label: "Big Tech & Antitrust",
+            plainEnglish: "Companies like Amazon, Google, Apple, and Meta have grown so dominant that they've bought or crushed most of their competition. Warren has been one of the most vocal senators calling to break up Big Tech — arguing their size harms consumers, workers, and democracy itself.",
+            whyItMatters: "Amazon marketplace sellers, app developers, and small media companies have all complained about being crushed by tech giants. People are searching 'Google monopoly lawsuit' and 'Amazon antitrust' as major cases work through the courts — and want to know where their senators stand.",
+            alignment: 92,
+            stance: "Strongly supports breaking up big tech companies and aggressive antitrust enforcement.",
+            detail: "Warren literally called for breaking up Amazon, Google, and Facebook in a 2019 plan that became a major campaign talking point. Backs the American Innovation and Choice Online Act, which would prohibit dominant platforms from favoring their own products. Supports stronger FTC and DOJ antitrust enforcement budgets. Has pushed for updated merger review standards that factor in harm to competition, not just immediate price effects.",
+            voteRecord: [
+              { bill: "American Innovation and Choice Online Act", year: 2022, vote: "Yes" },
+              { bill: "Platform Competition and Opportunity Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "social-media-youth",
+            label: "Social Media & Youth Safety",
+            plainEnglish: "Warren supports laws that would require social media platforms to restrict addictive features for minors, make their algorithms transparent, and give parents more control. She links the teen mental health crisis directly to how these platforms are designed.",
+            whyItMatters: "The Senate has held emotional hearings with parents of children harmed by social media. Meta, TikTok, and Snapchat executives have been grilled on Capitol Hill. 'Social media mental health kids' and 'TikTok ban explained' are consistently trending. Parents are actively searching for what Congress is actually doing.",
+            alignment: 85,
+            stance: "Supports restricting algorithmic targeting of minors and mandatory platform safety audits.",
+            detail: "Backed the Kids Online Safety Act (KOSA), which would require platforms to provide kids with the ability to opt out of algorithmic recommendations and restrict addictive features. Supports the Children and Teens' Online Privacy Protection Act (COPPA 2.0). Has pushed for FTC authority to fine companies for repeated violations of children's privacy.",
+            voteRecord: [
+              { bill: "Kids Online Safety Act (KOSA)", year: 2023, vote: "Yes" },
+              { bill: "COPPA 2.0 (children's online privacy)", year: 2023, vote: "Yes" },
             ],
           },
         ],
@@ -544,7 +892,26 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
     name: "Ed Markey",
     role: "U.S. Senator, Massachusetts",
     party: "Democrat",
+    photo: "https://bioguide.congress.gov/bioguide/photo/M/M000133.jpg",
     openSecretsUrl: "https://www.opensecrets.org/members-of-congress/ed-markey/summary?cid=N00000270",
+
+    /* ── CURRENT STATUS ──────────────────────── */
+    status: {
+      currentTitle: "U.S. Senator",
+      state: "Massachusetts",
+      statusType: "incumbent",
+      statusLabel: "Currently serving",
+      termInfo: "Serving since 2013 (Senate). Previously served in the House 1976–2013. Up for re-election in 2026.",
+      nextElection: "2026",
+      runningFor: null,
+      committees: [
+        "Senate Foreign Relations",
+        "Senate Commerce, Science & Transportation",
+        "Senate Environment & Public Works",
+        "Senate Judiciary",
+      ],
+      plainEnglish: "Markey has been in elected office continuously since 1973 — first in the Massachusetts state legislature, then the U.S. House for 37 years, and now the U.S. Senate. He won re-election to the Senate in 2020. His current term runs until January 2027.",
+    },
 
     /* ── FUNDING ─────────────────────────────── */
     funding: {
@@ -853,6 +1220,78 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
         ],
       },
 
+      /* ── PUBLIC INFRASTRUCTURE ───────────── */
+      {
+        id: "infrastructure",
+        topic: "Public Infrastructure",
+        icon: "🚇",
+        subIssues: [
+          {
+            id: "public-transit",
+            label: "Public Transportation",
+            plainEnglish: "Markey backed the largest federal transit investment in U.S. history — $39 billion for buses, subways, and rail systems. For Massachusetts, that means funding for MBTA repairs, new Green Line cars, and commuter rail upgrades.",
+            whyItMatters: "The MBTA's years of breakdowns, slow zones, and service cuts have become a defining issue for Boston-area residents. People are searching 'why is the T so bad' and 'MBTA federal funding' — and looking at who in Washington is actually fighting for it.",
+            alignment: 90,
+            stance: "Strongly supports federal transit investment and Northeast Corridor rail expansion.",
+            detail: "Backed the Infrastructure Investment and Jobs Act (2021), which included $39 billion for public transit. Supports Amtrak expansion on the Northeast Corridor as a climate-smart alternative to driving and flying. Has specifically advocated for MBTA capital funding and commuter rail electrification. Co-authored the GREEN Act which tied transportation funding to emissions reduction goals.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act", year: 2021, vote: "Yes" },
+              { bill: "Amtrak Improvement Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "roads-bridges",
+            label: "Roads, Bridges & Highway Safety",
+            plainEnglish: "Massachusetts has hundreds of bridges rated structurally deficient. Markey voted for the bipartisan infrastructure law that sent over a billion dollars to Massachusetts specifically for road and bridge repairs.",
+            whyItMatters: "Every driver in Massachusetts has hit a pothole or sat in construction traffic. When bridges collapsed elsewhere in the U.S., people started searching the condition of local bridges. This is an issue that spans party lines — everyone uses the roads.",
+            alignment: 78,
+            stance: "Supports bipartisan federal investment in road and bridge infrastructure.",
+            detail: "Voted for the Infrastructure Investment and Jobs Act, which provided $110 billion for roads and bridges nationally. Massachusetts received over $1.2 billion in federal highway formula funding. Backs complete streets design standards that improve safety for all users including pedestrians, cyclists, and people with disabilities.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "broadband",
+            label: "Broadband & Internet Access",
+            plainEnglish: "Internet access is Markey's signature infrastructure issue — he's fought for it since before most people knew what broadband was. He backed $65 billion in federal funding to connect every household in America, including low-income families who currently can't afford it.",
+            whyItMatters: "Markey has championed broadband equity for decades, but the COVID pandemic made it urgent. Kids doing school on mobile hotspots in parking lots became a national story. 'Free internet for low-income families' and 'ACP broadband subsidy' are still widely searched by Massachusetts families.",
+            alignment: 95,
+            stance: "Strongly supports universal broadband deployment and affordable pricing.",
+            detail: "Backed $65 billion in broadband provisions in the Infrastructure Investment and Jobs Act. Championed the Affordable Connectivity Program (ACP), which provided up to $30/month internet subsidies. Long-time author of internet equity legislation and net neutrality protections. Supports municipal broadband and FCC authority to regulate ISP pricing.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (broadband)", year: 2021, vote: "Yes" },
+              { bill: "Affordable Connectivity Program Extension Act", year: 2024, vote: "Yes" },
+            ],
+          },
+          {
+            id: "water-systems",
+            label: "Water & Sewer Infrastructure",
+            plainEnglish: "Markey backed a $55 billion federal investment — the largest ever — to replace lead pipes and upgrade aging water systems. Massachusetts cities like Lynn and Lowell have infrastructure dating back over 100 years.",
+            whyItMatters: "The Flint water crisis brought lead pipes into national focus. Massachusetts communities with aging systems have similar risks. Parents are searching 'is my tap water safe' and 'lead pipes Massachusetts.' Federal water infrastructure money is one of the most direct ways a senator impacts local health.",
+            alignment: 84,
+            stance: "Supports lead pipe replacement and federal water system investment.",
+            detail: "The Infrastructure Investment and Jobs Act included $55 billion for water systems — the largest federal water investment in U.S. history. Markey voted yes. Provisions require states to replace all lead service lines within 10 years. Supported additional funding for environmental justice communities disproportionately affected by aging water infrastructure.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (water)", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "airports-ports",
+            label: "Airports & Ports",
+            plainEnglish: "Logan Airport and the Port of Boston handle millions of passengers and billions in cargo annually. Markey backed federal grants to modernize both — which affects flight reliability and the price of goods shipped through Boston.",
+            whyItMatters: "Post-COVID flight cancellations, FAA staffing shortages, and supply chain disruptions from port backlogs made airport and port infrastructure front-page news. People connect infrastructure investment to real costs they're experiencing — higher prices and delayed flights.",
+            alignment: 72,
+            stance: "Supports airport modernization grants and port electrification investment.",
+            detail: "The Infrastructure Investment and Jobs Act included $25 billion for airports and $17 billion for ports. Markey supported these provisions. Advocated for zero-emission port equipment and terminal electrification as part of his climate agenda. Backed FAA workforce provisions to reduce staffing-related flight delays.",
+            voteRecord: [
+              { bill: "Infrastructure Investment and Jobs Act (airports/ports)", year: 2021, vote: "Yes" },
+              { bill: "FAA Reauthorization Act", year: 2023, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
       /* ── PUBLIC SAFETY ───────────────── */
       {
         id: "public-safety",
@@ -884,6 +1323,262 @@ export const CANDIDATE_PROFILES: CandidateProfile[] = [
             voteRecord: [
               { bill: "George Floyd Justice in Policing Act", year: 2021, vote: "Yes" },
               { bill: "EQUAL Act", year: 2021, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── ECONOMY & WORKERS ───────────── */
+      {
+        id: "economy",
+        topic: "Economy & Workers",
+        icon: "💼",
+        subIssues: [
+          {
+            id: "minimum-wage",
+            label: "Minimum Wage",
+            plainEnglish: "Markey supports raising the federal minimum wage to $15/hour. Massachusetts already has a higher state wage floor, but millions of workers in other states earn the federal minimum of $7.25 — a figure that hasn't changed since 2009.",
+            whyItMatters: "Federal minimum wage debates affect workers across the country. People searching 'minimum wage Massachusetts' and 'living wage calculator' are often comparing what they earn to what it actually costs to live in their city — and looking for who's fighting to change it.",
+            alignment: 90,
+            stance: "Strongly supports raising the federal minimum wage to $15/hour.",
+            detail: "Co-sponsored the Raise the Wage Act. Has supported minimum wage increases throughout his 47+ year career. Argues the federal minimum wage has lost more than 20% of its purchasing power since it was last raised and must be increased and indexed to inflation.",
+            voteRecord: [
+              { bill: "Raise the Wage Act", year: 2021, vote: "Yes" },
+              { bill: "Minimum Wage Fairness Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "workers-rights",
+            label: "Union Rights & Collective Bargaining",
+            plainEnglish: "Markey strongly supports the legal right for workers to organize into unions and bargain collectively. He backed the PRO Act — the biggest pro-union federal legislation in decades — which would make it harder for employers to block union drives.",
+            whyItMatters: "The wave of union drives at Amazon, Starbucks, and Massachusetts hospitals has made labor rights front-page news. People are asking 'can I form a union' and 'what is the PRO Act' — as workers at companies they interact with daily try to organize.",
+            alignment: 88,
+            stance: "Supports the PRO Act and stronger collective bargaining protections.",
+            detail: "Backed the PRO Act, which would ban mandatory anti-union meetings, allow workers to strike in solidarity with other unions, and strengthen penalties for illegal union-busting. Long track record of supporting public sector unions and federal employee bargaining rights throughout his congressional career.",
+            voteRecord: [
+              { bill: "PRO Act (Protecting the Right to Organize)", year: 2021, vote: "Yes" },
+              { bill: "Public Service Freedom to Negotiate Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "gig-economy",
+            label: "Gig Workers & Job Classification",
+            plainEnglish: "Millions of people drive for Uber, deliver for DoorDash, or freelance on digital platforms — and are classified as 'independent contractors' rather than employees, which means they don't get healthcare, overtime, or unemployment. Markey supports changing federal rules to give these workers more protections.",
+            whyItMatters: "Massachusetts went through a major gig worker ballot fight in 2022. With more people working gig jobs, people are searching 'gig worker rights Massachusetts' and 'do Uber drivers get benefits' — and looking for federal representatives who have a position on it.",
+            alignment: 80,
+            stance: "Supports stronger federal standards to classify and protect gig workers.",
+            detail: "Backs the ABC worker classification test to ensure workers aren't misclassified as contractors to avoid labor protections. Supports extending unemployment insurance, workers' comp, and collective bargaining rights to gig workers. Has pushed for portable benefits systems that follow workers regardless of employer.",
+            voteRecord: [
+              { bill: "Worker Organizing and Protection Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "inflation-cost-of-living",
+            label: "Inflation & Cost of Living",
+            plainEnglish: "Markey argues that corporate price-gouging — companies raising prices beyond their actual cost increases — made inflation worse and longer-lasting. He backed legislation targeting pharmaceutical companies, energy companies, and grocers for excess profits during high-inflation periods.",
+            whyItMatters: "'Why is everything so expensive' was the defining economic question of the mid-2020s. Grocery prices, rent, and energy costs remain elevated. People in Massachusetts — one of the most expensive states — are directly feeling these costs and searching for who is taking action.",
+            alignment: 76,
+            stance: "Supports price gouging legislation and corporate windfall profit accountability.",
+            detail: "Backed the Price Gouging Prevention Act. Supported the Inflation Reduction Act's provisions on drug prices and clean energy cost reduction. Advocates for FTC enforcement against anticompetitive pricing by dominant firms. Supports utility regulation to prevent energy companies from passing excessive profits to consumers.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act", year: 2022, vote: "Yes" },
+              { bill: "Price Gouging Prevention Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "small-business",
+            label: "Small Business Support",
+            plainEnglish: "Markey supports access to capital for small businesses and protections against being crushed by dominant online platforms like Amazon, which can undercut small sellers or demote their products in search results.",
+            whyItMatters: "Small businesses across Massachusetts — from Lowell to the Cape — were devastated by COVID and are still recovering. Business owners are searching for relief programs, fair lending, and protection from corporate consolidation in ways that affect their livelihoods daily.",
+            alignment: 78,
+            stance: "Supports small business access to credit and antitrust protections from big tech platforms.",
+            detail: "Backed SBA relief programs during COVID. Supports the American Innovation and Choice Online Act to prevent dominant platforms from favoring their own products over small sellers. Advocates for Community Development Financial Institutions (CDFIs) that serve underserved small businesses in Gateway Cities.",
+            voteRecord: [
+              { bill: "American Rescue Plan (small business)", year: 2021, vote: "Yes" },
+              { bill: "American Innovation and Choice Online Act", year: 2022, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── ENVIRONMENT & CLIMATE ───────── */
+      {
+        id: "environment",
+        topic: "Environment & Climate",
+        icon: "🌱",
+        subIssues: [
+          {
+            id: "climate-emissions",
+            label: "Climate Change & Emissions",
+            plainEnglish: "Markey co-authored the Green New Deal — the most ambitious climate and jobs proposal in U.S. history. He believes climate change is a genuine emergency that requires transforming the entire economy, not just incremental adjustments.",
+            whyItMatters: "Rising seas, more intense storms, and summer heat waves are already hitting Massachusetts. Boston's waterfront, the South Shore, and the Cape all face flooding risk. People are searching 'climate change Boston flooding' and 'Green New Deal explained' — and Markey is the senator most identified with this fight.",
+            alignment: 97,
+            stance: "Strongly supports rapid decarbonization. Co-authored the Green New Deal.",
+            detail: "Co-introduced the Green New Deal resolution with Rep. Alexandria Ocasio-Cortez. Voted for the Inflation Reduction Act's $369 billion in clean energy investments. Supports net-zero emissions by 2050 with binding 2030 interim targets. Has pushed for a Just Transition that ensures fossil fuel workers have jobs in the clean energy economy.",
+            voteRecord: [
+              { bill: "Green New Deal Resolution", year: 2019, vote: "Introduced" },
+              { bill: "Inflation Reduction Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "offshore-wind",
+            label: "Offshore Wind & Renewable Energy",
+            plainEnglish: "Markey has championed offshore wind energy off the Massachusetts coast for over a decade — long before it became mainstream. He argues it will create thousands of local jobs, lower electricity bills, and dramatically cut carbon emissions.",
+            whyItMatters: "Vineyard Wind, South Fork Wind, and other projects off Massachusetts are now live news — involving jobs, fishing communities, coastal visuals, and electricity prices. Workers, fishermen, and homeowners are all searching for what offshore wind means for them.",
+            alignment: 95,
+            stance: "Strongly supports offshore wind expansion and has championed it for over a decade.",
+            detail: "Has advocated for offshore wind energy since the early 2010s. Backed offshore wind provisions in the Inflation Reduction Act and the Infrastructure Investment and Jobs Act. Supports streamlined federal permitting and buy-American manufacturing requirements for turbines and cables. Has worked with fishing communities to address concerns about siting impacts.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (offshore wind)", year: 2022, vote: "Yes" },
+              { bill: "BUILD GREEN Infrastructure and Jobs Act", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "environmental-justice",
+            label: "Environmental Justice",
+            plainEnglish: "Low-income communities and communities of color near highways, power plants, and industrial sites in Massachusetts — like Chelsea, East Boston, and Lawrence — bear a disproportionate share of pollution and its health effects. Markey advocates for policies that specifically target investment and cleanup in these communities.",
+            whyItMatters: "Asthma rates near Boston's highways and industrial corridors are among the highest in the state. Residents in environmental justice communities are searching for accountability from elected officials — not just promises. This is a health issue, an economic issue, and a racial justice issue.",
+            alignment: 92,
+            stance: "Strongly supports environmental justice investment and frontline community protections.",
+            detail: "Backed the Environmental Justice for All Act. Supported Justice40 commitments in the Inflation Reduction Act. Has worked specifically on air quality and Superfund cleanup in Massachusetts environmental justice communities. Supports community right-to-know provisions requiring industrial facilities to disclose emissions data.",
+            voteRecord: [
+              { bill: "Environmental Justice for All Act", year: 2021, vote: "Yes" },
+              { bill: "Inflation Reduction Act (EJ provisions)", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "fossil-fuels",
+            label: "Oil, Gas & Fossil Fuel Policy",
+            plainEnglish: "Markey opposes new oil and gas drilling on federal lands and waters, and wants to end the billions in annual tax breaks the federal government gives to fossil fuel companies — arguing those subsidies make no sense when the climate is in crisis.",
+            whyItMatters: "Gas price spikes, oil company record profits, and pipeline debates have made fossil fuel policy impossible to ignore. People are connecting their energy bills to federal policy and searching 'why is gas so expensive' and 'oil company subsidies' — and Markey has been vocal on both.",
+            alignment: 88,
+            stance: "Opposes new fossil fuel drilling and supports ending fossil fuel subsidies.",
+            detail: "Co-authored legislation to end fossil fuel subsidies through the End Polluter Welfare Act. Backed the Inflation Reduction Act's methane emission fee on oil and gas producers. Opposes new LNG export terminals and oil drilling in the Arctic. One of the Senate's strongest voices for keeping fossil fuels in the ground.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (methane fee)", year: 2022, vote: "Yes" },
+              { bill: "End Polluter Welfare Act", year: 2021, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── TAXES & GOVERNMENT SPENDING ──── */
+      {
+        id: "taxes",
+        topic: "Taxes & Government Spending",
+        icon: "💰",
+        subIssues: [
+          {
+            id: "wealth-tax",
+            label: "Wealth Tax & Corporate Taxes",
+            plainEnglish: "Markey supports making the ultra-wealthy and large corporations pay more in taxes — arguing they've benefited most from the economy while regular workers have seen their share shrink. He backed Warren's wealth tax proposal and the corporate minimum tax in the Inflation Reduction Act.",
+            whyItMatters: "Billionaire wealth has grown exponentially while wages stagnated. People are searching 'why don't billionaires pay taxes' and 'how much do corporations pay in taxes' — and there's a widespread sense that the system is rigged. Markey is one of the senators most vocal about fixing it.",
+            alignment: 90,
+            stance: "Supports wealth tax, corporate minimum tax, and reversing regressive tax cuts.",
+            detail: "Backed the Inflation Reduction Act's 15% corporate minimum tax, ensuring large corporations pay at least some federal tax. Supports the Ultra-Millionaire Tax Act introduced by Warren. Advocates for reversing the 2017 Tax Cuts and Jobs Act's corporate rate cuts. Supports closing carried interest and step-up-in-basis loopholes used by the wealthy.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (corporate minimum tax)", year: 2022, vote: "Yes" },
+              { bill: "Ultra-Millionaire Tax Act", year: 2021, vote: "Yes" },
+            ],
+          },
+          {
+            id: "social-security",
+            label: "Social Security & Medicare",
+            plainEnglish: "Markey has voted against every attempt to cut Social Security or Medicare in his 47+ years in Congress. He also supports expanding Social Security benefits — not just preserving them — by having high earners pay more into the system.",
+            whyItMatters: "Seniors and workers nearing retirement are constantly searching 'will Social Security be there for me' and 'Medicare cuts.' With funding shortfalls projected in the 2030s, this is an urgent issue for millions of Massachusetts residents.",
+            alignment: 95,
+            stance: "Strongly opposes Social Security and Medicare cuts. Supports expanding benefits.",
+            detail: "Decades-long record of opposing any reductions to Social Security or Medicare. Co-sponsored the Social Security Expansion Act. Backed Medicare drug price negotiation in the Inflation Reduction Act, directly reducing costs for seniors. Opposes raising the retirement age and supports strengthening the Social Security Trust Fund through progressive revenue increases.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (Medicare drug pricing)", year: 2022, vote: "Yes" },
+              { bill: "Social Security Expansion Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "deficit-spending",
+            label: "Federal Budget & Deficit",
+            plainEnglish: "Markey believes the U.S. should invest in people, climate, and infrastructure — and pay for it by taxing the wealthy rather than cutting programs. He's opposed government shutdown threats and debt ceiling brinkmanship that puts ordinary people's benefits at risk.",
+            whyItMatters: "Government shutdowns, debt ceiling standoffs, and battles over the federal budget make news every year. People search 'what happens in a government shutdown' and 'what is the debt ceiling' — and want representatives who will protect their benefits rather than use them as bargaining chips.",
+            alignment: 62,
+            stance: "Supports investment offset by progressive taxes, not cuts to social programs.",
+            detail: "Voted for the Inflation Reduction Act, which was projected to reduce the deficit by $300 billion over 10 years via new corporate and high-income taxes. Opposes using debt ceiling negotiations to extract cuts to Social Security, Medicare, or Medicaid. Supports pay-as-you-go rules with progressive revenue mechanisms.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (deficit provisions)", year: 2022, vote: "Yes" },
+              { bill: "Debt Ceiling Responsibility Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "drug-pricing",
+            label: "Prescription Drug Prices",
+            plainEnglish: "Markey has fought for decades to allow Medicare to negotiate drug prices — something every other developed country does. The Inflation Reduction Act finally made this happen, and he supported it. He also backed capping insulin at $35/month for Medicare patients.",
+            whyItMatters: "Insulin rationing stories — people dying because they couldn't afford a drug that costs $3 to make — became a rallying point in American politics. 'Why is insulin so expensive' and 'Medicare drug prices' are consistently high-search queries. Massachusetts has major pharmaceutical companies and millions of patients affected by drug pricing.",
+            alignment: 95,
+            stance: "Strongly supports Medicare drug price negotiation and insulin price caps.",
+            detail: "Long-time advocate for Medicare drug price negotiation. Voted for the Inflation Reduction Act, which gave Medicare this power for the first time. Supported the $35/month insulin cap for Medicare patients and has pushed to extend it to all Americans. Supports allowing drug importation from Canada as an additional cost-reduction mechanism.",
+            voteRecord: [
+              { bill: "Inflation Reduction Act (drug pricing)", year: 2022, vote: "Yes" },
+              { bill: "Insulin Price Reduction Act", year: 2023, vote: "Yes" },
+            ],
+          },
+        ],
+      },
+
+      /* ── TECHNOLOGY & PRIVACY ────────── */
+      {
+        id: "technology",
+        topic: "Technology & Privacy",
+        icon: "💻",
+        subIssues: [
+          {
+            id: "ai-regulation",
+            label: "Artificial Intelligence Regulation",
+            plainEnglish: "AI tools are being used to make decisions about hiring, credit, bail, and healthcare. Markey supports rules requiring companies to audit their AI systems for bias and be transparent about how they work — especially when AI decisions affect people's lives.",
+            whyItMatters: "AI regulation is one of the fastest-growing political search topics. People are asking 'can AI decide if I get a job or a loan,' 'who regulates AI,' and 'what is the AI bill' — as these systems make consequential decisions with minimal oversight.",
+            alignment: 82,
+            stance: "Supports federal AI accountability, bias audits, and transparency requirements.",
+            detail: "Backed the Algorithmic Accountability Act, which would require companies to audit automated systems for accuracy and bias. Chairs the subcommittee with jurisdiction over AI and technology. Supports the FTC having clear authority to regulate harmful AI applications. Has raised specific concerns about AI in hiring, healthcare, and criminal justice contexts.",
+            voteRecord: [
+              { bill: "Algorithmic Accountability Act", year: 2022, vote: "Yes" },
+              { bill: "AI Accountability Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "data-privacy",
+            label: "Data Privacy & Surveillance",
+            plainEnglish: "Markey authored COPPA — the main federal law protecting children's privacy online — and has fought for stronger data privacy protections for decades. He wants a federal law giving all Americans the right to know what data is collected about them and to have it deleted.",
+            whyItMatters: "Every phone app, website, and smart device collects data. Location data, health data, and browsing history are sold to brokers and advertisers without most people knowing. 'How do I delete my data' and 'what does my phone know about me' are persistently searched. The U.S. still has no comprehensive federal privacy law.",
+            alignment: 93,
+            stance: "Strongly supports comprehensive federal data privacy law and surveillance limits.",
+            detail: "Author of COPPA (Children's Online Privacy Protection Act). Backed the American Data Privacy and Protection Act (ADPPA). Supports reauthorization of Section 702 surveillance only with strong warrant requirements. Has consistently pushed for commercial surveillance limits and government data purchase restrictions.",
+            voteRecord: [
+              { bill: "American Data Privacy and Protection Act", year: 2022, vote: "Yes" },
+              { bill: "Fourth Amendment Is Not For Sale Act", year: 2023, vote: "Yes" },
+            ],
+          },
+          {
+            id: "big-tech-antitrust",
+            label: "Big Tech & Antitrust",
+            plainEnglish: "Markey supports breaking up or more tightly regulating dominant tech companies like Google, Amazon, Apple, and Meta — arguing that their market power harms competition, crushes small businesses, and gives them too much influence over public information.",
+            whyItMatters: "Major antitrust cases against Google and Amazon are active in U.S. courts right now. People are searching 'Google antitrust ruling' and 'Amazon monopoly' — and want to know which senators are pushing for accountability vs. protecting tech companies.",
+            alignment: 86,
+            stance: "Supports stronger antitrust enforcement and platform competition rules.",
+            detail: "Backed the American Innovation and Choice Online Act, which would ban dominant platforms from favoring their own products. Supports updated merger review standards. Advocates for FTC and DOJ antitrust enforcement funding. His committee jurisdiction over commerce and communications gives him direct influence over tech regulation.",
+            voteRecord: [
+              { bill: "American Innovation and Choice Online Act", year: 2022, vote: "Yes" },
+              { bill: "Platform Competition and Opportunity Act", year: 2022, vote: "Yes" },
+            ],
+          },
+          {
+            id: "social-media-youth",
+            label: "Social Media & Youth Safety",
+            plainEnglish: "Markey authored the original COPPA law protecting kids online and is now pushing to update it for the social media era. He wants platforms to stop targeting children with addictive algorithmic recommendations and give parents meaningful control.",
+            whyItMatters: "Senate hearings on teen social media harm have been some of the most-watched congressional moments in years. Parents are searching 'social media mental health teens' and 'how to protect my kid online' — and Markey is the senator who literally wrote the original children's online privacy law.",
+            alignment: 92,
+            stance: "Strongly supports youth online safety legislation and COPPA modernization.",
+            detail: "Authored the original COPPA law in 1998 and led the push for COPPA 2.0 to cover social media. Backed the Kids Online Safety Act (KOSA). Supports requiring algorithmic transparency for minors and age-appropriate design standards. Has held multiple hearings with tech executives on youth mental health and platform design.",
+            voteRecord: [
+              { bill: "Kids Online Safety Act (KOSA)", year: 2023, vote: "Yes" },
+              { bill: "COPPA 2.0", year: 2023, vote: "Yes" },
             ],
           },
         ],
