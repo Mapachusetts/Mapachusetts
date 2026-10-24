@@ -65,7 +65,11 @@
           <div class="profile-meta">
             <h3 id="profileName"></h3>
             <p id="profileRole" class="profile-role"></p>
-            <span class="profile-party" id="profileParty"></span>
+            <div class="profile-badges">
+              <span class="profile-party" id="profileParty"></span>
+              <span class="profile-status-badge" id="profileStatusBadge"></span>
+            </div>
+            <p class="profile-term" id="profileTermInfo"></p>
           </div>
           <a class="profile-source-link" id="profileOpenSecrets" href="#" target="_blank" rel="noopener noreferrer">
             View on OpenSecrets ↗
@@ -122,7 +126,9 @@
 
         <!-- TAB 2: Career History -->
         <div class="tab-panel hidden" id="tab-career" role="tabpanel">
-          <p class="tab-intro">Roles held in chronological order, most recent first.</p>
+          <!-- Current status card -->
+          <div class="status-card" id="statusCard"></div>
+          <p class="tab-intro" style="margin-top:1.5rem;">Roles held in chronological order, most recent first.</p>
           <ol class="career-timeline" id="careerTimeline" aria-label="Career timeline"></ol>
         </div>
 

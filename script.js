@@ -155,12 +155,32 @@ function renderProfile(c) {
   document.getElementById("profileOpenSecrets").href  = c.openSecretsUrl;
 
   const avatar = document.getElementById("profileAvatar");
-  avatar.textContent    = c.name.split(" ").map((w) => w[0]).join("").slice(0, 2);
-  avatar.dataset.party  = c.party.toLowerCase();
+  avatar.dataset.party = c.party.toLowerCase();
+  if (c.photo) {
+    avatar.innerHTML = `<img src="${c.photo}" alt="Official photo of ${c.name}" />`;
+    avatar.classList.add("has-photo");
+  } else {
+    avatar.textContent = c.name.split(" ").map((w) => w[0]).join("").slice(0, 2);
+    avatar.classList.remove("has-photo");
+  }
+
+  // Status badge + term info in header
+  const statusBadge = document.getElementById("profileStatusBadge");
+  const termInfo    = document.getElementById("profileTermInfo");
+  if (c.status) {
+    statusBadge.textContent         = c.status.statusLabel;
+    statusBadge.dataset.statusType  = c.status.statusType;
+    statusBadge.hidden              = false;
+    termInfo.textContent            = c.status.termInfo;
+    termInfo.hidden                 = false;
+  } else {
+    statusBadge.hidden = true;
+    termInfo.hidden    = true;
+  }
 
   // Render each tab
   renderFunding(c.funding);
-  renderCareer(c.career);
+  renderCareer(c.career, c.status);
   renderOpinions(c.opinions);
   renderSources(c.sources);
   renderMisconceptions(c.misconceptions);
@@ -231,7 +251,45 @@ function renderFunding(funding) {
 // ─────────────────────────────────────────────
 //  TAB 2 — Career History
 // ─────────────────────────────────────────────
-function renderCareer(career) {
+function renderCareer(career, status) {
+  // Status card at top of career tab
+  const statusCard = document.getElementById("statusCard");
+  if (status) {
+    const typeIcon = { incumbent: "🏛️", running: "🗳️", former: "📋" }[status.statusType] || "📋";
+    const committeesHTML = status.committees && status.committees.length
+      ? `<div class="status-committees">
+           <span class="status-section-label">Committee Assignments</span>
+           <ul>${status.committees.map(c => `<li>${c}</li>`).join("")}</ul>
+         </div>`
+      : "";
+    const runningHTML = status.runningFor
+      ? `<div class="status-running">
+           <span class="status-section-label">Running for</span>
+           <strong>${status.runningFor}</strong>
+         </div>`
+      : "";
+
+    statusCard.innerHTML = `
+      <div class="status-card-header">
+        <span class="status-type-icon" aria-hidden="true">${typeIcon}</span>
+        <div>
+          <div class="status-title">${status.currentTitle} — ${status.state}</div>
+          <div class="status-term">${status.termInfo}</div>
+        </div>
+        <span class="status-badge-large" data-status-type="${status.statusType}">${status.statusLabel}</span>
+      </div>
+      <div class="plain-english-box" style="margin-top:0.75rem; margin-bottom:0;">
+        <span class="box-label">What this means</span>
+        <p>${status.plainEnglish}</p>
+      </div>
+      ${runningHTML}
+      ${committeesHTML}`;
+    statusCard.hidden = false;
+  } else {
+    statusCard.hidden = true;
+  }
+
+  // Timeline
   const timeline = document.getElementById("careerTimeline");
   timeline.innerHTML = "";
 
