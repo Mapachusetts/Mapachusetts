@@ -1,0 +1,84 @@
+{
+  "politician": {
+    "slug": "john-deaton",
+    "name": "John Deaton",
+    "party": "Republican",
+    "state": "MA",
+    "current_office": "Republican nominee for U.S. Senate",
+    "bio": "John Deaton is an attorney and U.S. Marine Corps veteran who founded the Deaton Law Firm in East Providence, Rhode Island, in 2006, representing asbestos and mesothelioma plaintiffs, and who drew wide attention for representing XRP holders in the SEC's case against Ripple Labs. He was the 2024 Republican nominee for U.S. Senate in Massachusetts, losing to Sen. Elizabeth Warren. In 2026 he ran unopposed in the Republican primary and is challenging Democratic Sen. Ed Markey in the Nov. 3 general election.",
+    "career_history": [
+      { "period": "1995-2002", "role": "Judge advocate (prosecutor and defense attorney), U.S. Marine Corps" },
+      { "period": "2002-2006", "role": "Attorney, plaintiffs' mesothelioma litigation firm" },
+      { "period": "2006-present", "role": "Founder, Deaton Law Firm (East Providence, R.I.)" },
+      { "period": "2024", "role": "Republican nominee for U.S. Senate in Massachusetts" },
+      { "period": "2026-present", "role": "Republican nominee for U.S. Senate in Massachusetts" }
+    ]
+  },
+  "summary": "Deaton and Sen. Ed Markey met on Oct. 13 in their only scheduled debate, hosted by WBZ-TV in Boston [1][2][4]. Markey repeatedly tied Deaton to President Trump, saying he would be a \"blank check\" for the president and help keep Republicans in control of the Senate [2][4]. Deaton responded that he has never voted for, supported or endorsed Trump, and pitched himself as a nonpartisan voice who would back any proposal that helps Massachusetts [1][4]. The Globe reported that Deaton gave the state Republican Party nearly $350,000 weeks after its leaders voted to endorse him, and Markey called Deaton's claim to be both independent and Republican an oxymoron [1]. Deaton targeted Markey's five decades in Congress, citing his 1970s support for an abortion ban that he later reversed and his 2002 vote to authorize the Iraq war, while Markey dismissed the attacks as \"red herrings\" [1][2]. Deaton closed by asking for a second debate in western Massachusetts, which Markey did not accept [2].\n\nOn health care, Deaton faulted Markey for failing to build support for Medicare for All among Senate Democrats and said he would instead break up the largest vertically integrated insurance companies [2][4][5]. On energy, he blamed high utility bills on alternative energy mandates and proposed small modular nuclear reactors and expanded natural gas, while Markey defended the Green New Deal and said Deaton would deepen reliance on oil and gas [4][5]. Both candidates backed safeguards on artificial intelligence, with Deaton voicing concern that seniors could be exploited [2][5]. WBUR reported that Deaton breaks with Trump on the Iran war and tariffs, supports abortion rights, and favors reforming rather than abolishing ICE [3]. In an interview with a Globe columnist, Deaton said lowering health care costs would be his first priority and argued a Republican could give the state a pivotal vote in a closely divided Senate [8].\n\nOn the campaign trail in Malden and Stoneham, Deaton told voters he would support good ideas from either party, while acknowledging to WBUR that the Republican label is a major hurdle and his bid is a longshot [3]. Markey's campaign manager told WBUR that a vote for Deaton is a vote to continue the Republican Senate majority and the Trump agenda [3]. A UMass Amherst/WCVB poll conducted Oct. 5 to 12 found 56% of respondents favoring Markey and 29% favoring Deaton [6]. A Suffolk University/Boston Globe poll released Oct. 20 showed Markey at 60% and Deaton at almost 31%, with about 45% of respondents saying they had never heard of Deaton and 75% of those who had viewing him unfavorably [7].",
+  "citations": [
+    {
+      "n": 1,
+      "title": "Markey, Deaton met in their only Senate debate. Here are 3 takeaways.",
+      "url": "https://www.bostonglobe.com/2026/10/13/metro/massachusetts-senate-debate-markey-deaton-wbz/",
+      "source": "The Boston Globe",
+      "published_at": "2026-10-13",
+      "snippet": "Covers the only scheduled WBZ-TV debate, where Markey tied Deaton to Trump and the GOP, while Deaton said he never voted for Trump and attacked Markey's record; notes Deaton gave the state GOP nearly $350,000."
+    },
+    {
+      "n": 2,
+      "title": "Sen. Ed Markey and John Deaton square off in only debate before election",
+      "url": "https://www.boston.com/news/politics/2026/10/13/ed-markey-john-deaton-senate-debate/",
+      "source": "Boston.com",
+      "published_at": "2026-10-13",
+      "snippet": "Five debate takeaways: Markey invoked Trump repeatedly, Deaton cast himself as bipartisan and criticized Markey's past positions, both outlined health care, energy and AI views, and Markey declined Deaton's call for a second debate."
+    },
+    {
+      "n": 3,
+      "title": "John Deaton's biggest challenge isn't Ed Markey. It's President Trump",
+      "url": "https://www.wbur.org/news/2026/10/13/john-deaton-2026-senate-run-massachusetts",
+      "source": "WBUR",
+      "published_at": "2026-10-13",
+      "snippet": "Follows Deaton to campaign stops in Malden and Stoneham and reports on his pitch as a non-MAGA, abortion-rights Republican who breaks with Trump on Iran and tariffs, and his acknowledgment that his bid is a longshot."
+    },
+    {
+      "n": 4,
+      "title": "Trump loomed large in debate between Sen. Markey and Repulican challenger Deaton",
+      "url": "https://www.wbur.org/news/2026/10/14/senate-markey-deaton-debate-trump-healthcare-energy-massachusetts",
+      "source": "WBUR",
+      "published_at": "2026-10-14",
+      "snippet": "Reports Markey sought to link Deaton to Trump while Deaton denied ever supporting him, criticized Markey's Medicare for All push, and proposed small modular reactors and expanded natural gas to cut energy costs."
+    },
+    {
+      "n": 5,
+      "title": "Markey and Deaton clash on debate stage as Election Day nears",
+      "url": "https://www.nbcboston.com/news/politics/markey-and-deaton-clash-on-debate-stage-as-election-day-nears/4030732/",
+      "source": "NBC Boston",
+      "published_at": "2026-10-14",
+      "snippet": "Summarizes debate exchanges on health care, energy and AI, including Deaton's plan to break up large insurers, his view that energy mandates drive up utility bills, and his concern about AI and seniors."
+    },
+    {
+      "n": 6,
+      "title": "Trump's shadow affects Minogue negatively in Mass. governor's race, UMass Amherst/WCVB poll finds",
+      "url": "https://www.wcvb.com/article/umass-poll-healey-minogue-trump-markey-deaton-election-2026/74167943",
+      "source": "WCVB",
+      "published_at": "2026-10-19",
+      "snippet": "A UMass Amherst/WCVB poll of 800 registered voters, conducted Oct. 5 to 12, found Markey favored by 56% of respondents to Deaton's 29% in the U.S. Senate race."
+    },
+    {
+      "n": 7,
+      "title": "Nearly half of voters in pre-election poll say Mass. has gotten worse over 4 years",
+      "url": "https://www.wgbh.org/news/politics/2026-10-20/nearly-half-of-voters-in-pre-election-poll-say-mass-has-gotten-worse-over-4-years",
+      "source": "GBH News",
+      "published_at": "2026-10-20",
+      "snippet": "A Suffolk University/Boston Globe poll found Markey leading Deaton 60% to almost 31%; about 45% of respondents had never heard of Deaton, and 75% of those who had viewed him unfavorably."
+    },
+    {
+      "n": 8,
+      "title": "Why John Deaton thinks you should vote for a Republican",
+      "url": "https://www.bostonglobe.com/2026/10/20/opinion/john-deaton-senate-republican-ed-markey/",
+      "source": "The Boston Globe (Opinion)",
+      "published_at": "2026-10-20",
+      "snippet": "Opinion column drawing on an interview in which Deaton argues a Republican could give Massachusetts a key vote in a divided Senate and names lowering health care costs as his first priority."
+    }
+  ]
+}

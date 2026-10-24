@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapachusetts: find the politics that matter where you live</title>
+  <meta
+    name="description"
+    content="Explore an interactive globe to find the U.S. elections, offices, town halls and public meetings that matter where you live."
+  />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8E%3C/text%3E%3C/svg%3E" />
+
+  <!-- MapLibre GL CSS. The JS is an ES module imported by js/globe.js. -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.15.0/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#panel">Skip to results</a>
+
+  <header class="topbar">
+    <a href="./" class="brand" aria-label="Mapachusetts home">
+      <span class="brand-mark" aria-hidden="true">🌎</span>
+      <span class="brand-name">Mapachusetts</span>
+    </a>
+
+    <!-- Search-as-you-type combobox (js/search.js) -->
+    <form id="searchForm" class="search" role="search" autocomplete="off">
+      <label for="searchInput" class="sr-only">Search for a U.S. city, county or state</label>
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input
+        id="searchInput"
+        class="search-input"
+        type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls="searchResults"
+        placeholder="Type a U.S. city or state, like “Sugar Land, TX”"
+        spellcheck="false"
+        autocapitalize="off"
+      />
+      <button class="btn btn-accent search-btn" type="submit">Search</button>
+      <ul id="searchResults" class="search-results" role="listbox" aria-label="Place suggestions" hidden></ul>
+      <p id="searchStatus" class="sr-only" aria-live="polite"></p>
+    </form>
+
+    <button class="btn btn-light" id="locateBtn" type="button">
+      <span aria-hidden="true">📍</span> Use my location
+    </button>
+
+    <!-- Links to the Next.js pages (candidate profiles + news) -->
+    <nav class="topbar-nav" aria-label="Site">
+      <a class="btn btn-ghost" href="/candidates">Candidates</a>
+      <a class="btn btn-ghost" href="/news">News</a>
+    </nav>
+  </header>
+
+  <!-- Dropdown browser: an alternative to the map for people who prefer lists -->
+  <section class="browsebar" aria-label="Pick a place from a list">
+    <div class="browse-intro">
+      <strong>Or pick from a list</strong>
+      <span class="browse-tip">Can't find your county or city? Use the search box above.</span>
+    </div>
+    <div class="browse" id="browse"></div>
+    <div class="browse-actions">
+      <button class="btn btn-ghost" id="upBtn" type="button" title="Go back up one level">
+        <span aria-hidden="true">↑</span> Back up
+      </button>
+      <button class="btn btn-ghost" id="worldBtn" type="button" title="Return to the whole world">
+        <span aria-hidden="true">🌍</span> Whole world
+      </button>
+    </div>
+  </section>
+
+  <div class="status-banner" id="status" role="status" hidden></div>
+
+  <main class="layout">
+    <!-- The globe -->
+    <section class="map-wrap" aria-label="Interactive 3D globe">
+      <div id="map"></div>
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="You are here"></nav>
+      <div class="map-overlay-bl">
+        <!-- Map key: shown only while zoomed out far enough to see the shading -->
+        <div class="map-legend" id="mapLegend" role="group" aria-label="Map key">
+          <span class="legend-item"><i class="swatch swatch-active" aria-hidden="true"></i> Available now: United States</span>
+          <span class="legend-item"><i class="swatch swatch-inactive" aria-hidden="true"></i> Not available yet</span>
+        </div>
+        <p class="map-hint">
+          <strong>Tap a dot</strong> to zoom in. <strong>Drag</strong> to spin the globe.
+        </p>
+      </div>
+      <noscript>
+        <p class="noscript">This map needs JavaScript. Please turn it on to explore.</p>
+      </noscript>
+    </section>
+
+    <!-- Political information for the current place -->
+    <aside class="panel" id="panel" aria-label="Political information">
+      <div class="panel-header">
+        <h1 class="panel-title" id="panelTitle">Welcome to Mapachusetts</h1>
+        <span class="level-pill" id="panelLevel" hidden></span>
+      </div>
+
+      <!-- Shown on the whole-world view -->
+      <div class="welcome" id="welcome">
+        <p class="lead">
+          Find the elections, offices, town halls and public meetings that matter
+          where you live in the United States.
+        </p>
+        <ol class="steps">
+          <li><span class="step-num">1</span> <span><strong>Search</strong> for your city or state, or tap <strong>Use my location</strong>.</span></li>
+          <li><span class="step-num">2</span> <span>Prefer lists? <strong>Pick</strong> a state, county and city from the menus.</span></li>
+          <li><span class="step-num">3</span> <span>See what's <strong>on your ballot</strong> and which <strong>events</strong> are coming up.</span></li>
+        </ol>
+        <p class="scope-note">
+          Mapachusetts covers the <strong>United States</strong> for now. Other
+          countries are shown in grey on the globe and aren't available yet.
+        </p>
+        <p class="quick-title">Try an example</p>
+        <div class="quick">
+          <button class="btn btn-soft" type="button" data-jump="tx-sugarland">Sugar Land, TX</button>
+          <button class="btn btn-soft" type="button" data-jump="ma-medford">Medford, MA</button>
+          <button class="btn btn-soft" type="button" data-jump="ma-boston">Boston, MA</button>
+        </div>
+      </div>
+
+      <!-- Shown once a place is selected -->
+      <div class="panel-body" id="panelBody" hidden>
+        <div class="tabs" role="tablist" aria-label="Type of information">
+          <button class="tab" id="tabRaces" type="button" role="tab" aria-selected="true" aria-controls="racesList">
+            <span aria-hidden="true">🗳️</span> On the ballot <span class="count" id="racesCount">0</span>
+          </button>
+          <button class="tab" id="tabEvents" type="button" role="tab" aria-selected="false" aria-controls="eventsList" tabindex="-1">
+            <span aria-hidden="true">📅</span> Events &amp; town halls <span class="count" id="eventsCount">0</span>
+          </button>
+        </div>
+        <div class="tab-scroll">
+          <div id="racesList" role="tabpanel" aria-labelledby="tabRaces" tabindex="0"></div>
+          <div id="eventsList" role="tabpanel" aria-labelledby="tabEvents" tabindex="0" hidden></div>
+        </div>
+      </div>
+
+      <footer class="panel-footer">
+        <p>
+          <strong>Sample data for demonstration.</strong> Candidates, offices and
+          events shown here are placeholders and are not real. Confirm details
+          with your local election office.
+        </p>
+      </footer>
+    </aside>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
