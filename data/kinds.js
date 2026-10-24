@@ -93,6 +93,15 @@ export const KINDS = {
     blurb:
       "A neighborhood-sized slice of a city, used to elect a city council member. Boundaries are set by the city. Only some cities elect their council this way; others elect everyone citywide.",
   },
+  precinct: {
+    label: "Voting precinct",
+    tag: "Precinct",
+    icon: "📍",
+    color: "#94a3b8",
+    ink: "#475569",
+    blurb:
+      "The smallest unit of election administration: neighbors in a precinct usually vote at the same polling place. Some cities group precincts into numbered wards. These lines come from the 2020 Census and change often, so confirm your polling place with your local election office.",
+  },
 };
 
 // Broad -> local. Used to sort the stack.
@@ -106,6 +115,7 @@ export const KIND_ORDER = [
   "city",
   "school",
   "ward",
+  "precinct",
 ];
 
 export function kindMeta(kind) {

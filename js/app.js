@@ -13,11 +13,15 @@
 //
 // Ways to move: click a country/state/county/pin, pick from the menus, search,
 // press "Use my location", or go Up / back to the whole world.
+//
+// Candidates: race cards, the search box and the intro all open a candidate's
+// research profile (js/candidate-sheet.js). `?candidate=<slug>` deep-links to one.
 
 import { Navigation } from "./navigation.js";
 import { Globe } from "./globe.js";
 import { UI } from "./ui.js";
 import { SearchBox } from "./search.js";
+import { CandidateSheet } from "./candidate-sheet.js";
 import { getCurrentPosition } from "./geolocation.js";
 import {
   fetchRacesForPlace,
@@ -31,6 +35,7 @@ import {
   resolvePlaceByCoords,
 } from "../data/civic.js";
 import { kindMeta } from "../data/kinds.js";
+import { getCandidate, racesForState } from "../data/candidates.js";
 
 const $ = (id) => document.getElementById(id);
 const THEME_KEY = "mapachusetts-theme";
@@ -133,10 +138,15 @@ const ui = new UI(
     // Opened a ballot section: just highlight that layer on the globe.
     onSelectLayer: (id) => focusLayer(id),
     onHoverLayer: (id) => globe.setHover(id),
+    // A candidate on a race card was clicked.
+    onOpenCandidate: (slug) => sheet.open(slug),
   }
 );
 ui.setTheme(theme);
 ui.showTab("ballot");
+
+// The candidate profile sheet. It slides over the dossier.
+const sheet = new CandidateSheet($("candidateSheet"));
 
 const search = new SearchBox(
   {
@@ -145,7 +155,10 @@ const search = new SearchBox(
     list: $("searchResults"),
     status: $("searchStatus"),
   },
-  { onSelect: (desc) => goToDescriptor(desc) }
+  {
+    onSelect: (desc) => goToDescriptor(desc),
+    onSelectCandidate: (slug) => sheet.open(slug),
+  }
 );
 
 // ----- Layout: keep the place clear of the floating panels ----------------------
@@ -220,6 +233,7 @@ nav.subscribe(async (state) => {
   const stale = () => seq !== renderSeq;
   const { current, path } = state;
   const isWorld = current.level === "globe";
+  sheet.close(); // a profile belongs to the place it was opened from
 
   // Reset everything that belongs to the previous place.
   dock.status = "loading";
@@ -467,6 +481,11 @@ locateBtn.addEventListener("click", locateMe);
 // ----- Buttons in the intro, keyboard shortcuts ---------------------------------------------
 
 document.addEventListener("click", (e) => {
+  const cand = e.target.closest("[data-candidate]");
+  if (cand) {
+    sheet.open(cand.dataset.candidate);
+    return;
+  }
   const jump = e.target.closest("[data-jump]");
   if (jump) {
     pointSource = null;
@@ -485,6 +504,33 @@ document.addEventListener("keydown", (e) => {
     search.focus();
   }
 });
+
+// ----- Candidates ------------------------------------------------------------------------
+
+// "Meet the candidates" chips in the intro: everyone in a researched race.
+(function fillHeroCandidates() {
+  const box = $("heroCandidates");
+  const seen = new Set();
+  for (const race of racesForState("MA")) {
+    for (const cand of race.candidates) {
+      if (seen.has(cand.slug) || !getCandidate(cand.slug)) continue;
+      seen.add(cand.slug);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip-btn";
+      btn.dataset.candidate = cand.slug;
+      btn.textContent = cand.name;
+      btn.title = `${race.office}: open ${cand.name}'s profile`;
+      box.appendChild(btn);
+    }
+  }
+  box.hidden = seen.size === 0;
+  box.previousElementSibling.hidden = seen.size === 0; // its heading
+})();
+
+// Deep link: /?candidate=maura-healey
+const deepLinked = new URLSearchParams(window.location.search).get("candidate");
+if (deepLinked) sheet.open(deepLinked, { focus: false });
 
 // Opening / closing the Browse panel changes how much of the map is covered.
 $("navigator").addEventListener("toggle", applyPadding);

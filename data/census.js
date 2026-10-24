@@ -3,7 +3,7 @@
 // state, county, city/town, congressional district, state legislative district
 // and school district in the country.
 //
-//   https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer
+//   https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/
 //
 // Free, no API key, and allows browser requests (CORS). Layer IDs change as
 // the Census adds new vintages (e.g. "120th Congressional Districts"), so they
@@ -23,35 +23,31 @@
 import { KIND_ORDER } from "./kinds.js";
 import { findLocalLayers } from "./local-sources.js";
 
-const SERVICE =
-  "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer";
-
-const FALLBACK_IDS = {
-  states: 80,
-  counties: 82,
-  congress: 54,
-  senate: 56,
-  house: 58,
-  unified: 14,
-  secondary: 16,
-  elementary: 18,
-  places: 28,
-  cdp: 30,
-  subdivisions: 22,
+// TIGERweb has one MapServer per vintage. Most layers come from "Current"
+// (120th Congress, 2026 legislative districts); voting districts (precincts and
+// wards) are only published with the 2020 Census.
+const SERVICES = {
+  current:
+    "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Current/MapServer",
+  census2020:
+    "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/tigerWMS_Census2020/MapServer",
 };
 
-const NAME_PATTERNS = {
-  states: /^States$/,
-  counties: /^Counties$/,
-  congress: /^\d+(st|nd|rd|th) Congressional Districts$/,
-  senate: /State Legislative Districts - Upper$/,
-  house: /State Legislative Districts - Lower$/,
-  unified: /^Unified School Districts$/,
-  secondary: /^Secondary School Districts$/,
-  elementary: /^Elementary School Districts$/,
-  places: /^Incorporated Places$/,
-  cdp: /^Census Designated Places$/,
-  subdivisions: /^County Subdivisions$/,
+// Layer IDs change as the Census adds vintages, so they are looked up by NAME at
+// runtime; `id` is the fallback if that lookup fails.
+const LAYERS = {
+  states: { service: "current", id: 80, pattern: /^States$/ },
+  counties: { service: "current", id: 82, pattern: /^Counties$/ },
+  congress: { service: "current", id: 54, pattern: /^\d+(st|nd|rd|th) Congressional Districts$/ },
+  senate: { service: "current", id: 56, pattern: /State Legislative Districts - Upper$/ },
+  house: { service: "current", id: 58, pattern: /State Legislative Districts - Lower$/ },
+  unified: { service: "current", id: 14, pattern: /^Unified School Districts$/ },
+  secondary: { service: "current", id: 16, pattern: /^Secondary School Districts$/ },
+  elementary: { service: "current", id: 18, pattern: /^Elementary School Districts$/ },
+  places: { service: "current", id: 28, pattern: /^Incorporated Places$/ },
+  cdp: { service: "current", id: 30, pattern: /^Census Designated Places$/ },
+  subdivisions: { service: "current", id: 22, pattern: /^County Subdivisions$/ },
+  vtd: { service: "census2020", id: 58, pattern: /^Voting Districts$/ },
 };
 
 // States where towns/townships (county subdivisions) are the real local
@@ -70,6 +66,7 @@ const SIMPLIFY = {
   city: 0.0008,
   school: 0.0015,
   ward: 0.0005,
+  precinct: 0.0003,
 };
 
 // ----- Plumbing --------------------------------------------------------------
@@ -86,9 +83,14 @@ function remember(key, make) {
   return memo.get(key);
 }
 
-async function getJson(url, signal) {
+// One request, with a timeout. Census services are public and occasionally slow,
+// so a failed attempt is retried once before giving up (the UI then falls back
+// gracefully; see the "error" state of the layer dock).
+const TIMEOUT_MS = 12000;
+
+async function getJsonOnce(url, signal) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20000);
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   const onAbort = () => ctrl.abort();
   signal?.addEventListener("abort", onAbort);
   try {
@@ -103,27 +105,43 @@ async function getJson(url, signal) {
   }
 }
 
-function layerIds() {
-  return remember("layer-ids", async () => {
-    try {
-      const svc = await getJson(`${SERVICE}?f=json`);
-      const ids = { ...FALLBACK_IDS };
-      for (const [key, pattern] of Object.entries(NAME_PATTERNS)) {
-        const hit = (svc.layers || []).find(
-          (l) => pattern.test(l.name) && !/Labels$/.test(l.name)
-        );
-        if (hit) ids[key] = hit.id;
-      }
-      return ids;
-    } catch {
-      return { ...FALLBACK_IDS };
+async function getJson(url, signal) {
+  try {
+    return await getJsonOnce(url, signal);
+  } catch (err) {
+    if (signal?.aborted) throw err; // the caller cancelled: don't retry
+    return getJsonOnce(url, signal); // one retry
+  }
+}
+
+function resolveLayers() {
+  return remember("layers", async () => {
+    const found = {};
+    await Promise.all(
+      Object.keys(SERVICES).map(async (svcKey) => {
+        try {
+          const svc = await getJson(`${SERVICES[svcKey]}?f=json`);
+          found[svcKey] = svc.layers || [];
+        } catch {
+          found[svcKey] = [];
+        }
+      })
+    );
+    const out = {};
+    for (const [key, def] of Object.entries(LAYERS)) {
+      const hit = (found[def.service] || []).find(
+        (l) => def.pattern.test(l.name) && !/Labels$/.test(l.name)
+      );
+      out[key] = { url: SERVICES[def.service], id: hit ? hit.id : def.id };
     }
+    return out;
   });
 }
 
 async function query(layerKey, params, signal) {
-  const ids = await layerIds();
-  const url = new URL(`${SERVICE}/${ids[layerKey]}/query`);
+  const layers = await resolveLayers();
+  const { url: base, id } = layers[layerKey];
+  const url = new URL(`${base}/${id}/query`);
   const all = { f: "json", outSR: "4326", ...params };
   for (const [k, v] of Object.entries(all)) url.searchParams.set(k, v);
   return getJson(url.toString(), signal);
@@ -214,7 +232,7 @@ async function doIdentify(lng, lat, kinds, signal) {
       (d) => d.features || []
     );
 
-  const [state, county, congress, senate, house, unified, secondary, elementary, places, subs, cdp] =
+  const [state, county, congress, senate, house, unified, secondary, elementary, places, subs, cdp, vtd] =
     await Promise.all([
       q("states"),
       wants("county") ? q("counties") : [],
@@ -227,6 +245,9 @@ async function doIdentify(lng, lat, kinds, signal) {
       wants("city") ? q("places") : [],
       wants("city") ? q("subdivisions") : [],
       wants("city") ? q("cdp") : [],
+      // Voting districts are a separate (2020) service; a failure must not
+      // break the rest of the stack.
+      wants("precinct") ? q("vtd").catch(() => []) : [],
     ]);
 
   const point = [lng, lat];
@@ -317,6 +338,13 @@ async function doIdentify(lng, lat, kinds, signal) {
     }
   }
 
+  // Voting precinct / ward (Census 2020 voting districts)
+  if (vtd[0]) {
+    const a = vtd[0].attributes;
+    const { name, short } = formatPrecinct(a, fips);
+    push("precinct", a, { name, short, layer: "vtd" });
+  }
+
   // Wards / council districts from city open-data portals (see local-sources.js)
   if (wants("ward")) {
     const city = stack.find((j) => j.kind === "city");
@@ -332,6 +360,36 @@ async function doIdentify(lng, lat, kinds, signal) {
   const order = (j) => KIND_ORDER.indexOf(j.kind);
   stack.sort((a, b) => order(a) - order(b));
   return { stack, unincorporated, unincorporatedName, inUS: true, point };
+}
+
+// Turn a raw Census voting-district name into something readable. Ported from
+// the Ward-Layer prototype (prototypes/ward-layer/script.js) and extended.
+//   Massachusetts encodes ward + precinct as "WWPP": "0306" -> Ward 3, Precinct 6
+//   Other states use a precinct number ("004042") or free text ("Wd 42 Pct 10").
+function formatPrecinct(attrs, stateFips) {
+  const raw = String(attrs.BASENAME || attrs.NAME || "").trim();
+  if (!raw) return { name: "Voting precinct", short: "Precinct" };
+  if (stateFips === "25" && /^\d{4}$/.test(raw)) {
+    const ward = parseInt(raw.slice(0, 2), 10);
+    const pct = parseInt(raw.slice(2), 10);
+    return ward > 0
+      ? { name: `Ward ${ward}, Precinct ${pct}`, short: `W${ward} · P${pct}` }
+      : { name: `Precinct ${pct}`, short: `Precinct ${pct}` };
+  }
+  if (/^\d+$/.test(raw)) {
+    const n = String(parseInt(raw, 10));
+    return { name: `Precinct ${n}`, short: `Precinct ${n}` };
+  }
+  const name = raw
+    .replace(/\bWd\.?\b/gi, "Ward")
+    .replace(/\bPct\.?\b/gi, "Precinct")
+    .replace(/\s+/g, " ");
+  // "Medford City Ward 8 Precinct 1" -> chip label "W8 · P1"
+  const ward = /\bward\s+(\w+)/i.exec(name);
+  const pct = /\bprecinct\s+(\w+)/i.exec(name);
+  if (ward && pct) return { name, short: `W${ward[1]} · P${pct[1]}` };
+  if (pct) return { name, short: `Precinct ${pct[1]}` };
+  return { name, short: shortDistrict(name) };
 }
 
 function shortDistrict(base) {

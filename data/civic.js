@@ -7,8 +7,10 @@
 //     loadChildren                   every county in a state / city in a county
 //     fetchChildShapes               clickable state / county polygons
 //
-//   POLITICS (SAMPLE placeholders today: replace these with your real data)
-//     fetchRacesForPlace             what's on the ballot
+//   POLITICS
+//     fetchRacesForPlace             what's on the ballot. REAL for the races in
+//                                    data/candidates.js (Massachusetts 2026 so far);
+//                                    SAMPLE placeholders for everything else.
 //     fetchEventsForPlace            town halls, meetings, voting dates
 //
 // To plug in a real dataset (e.g. your Supabase tables), replace the bodies of
@@ -36,6 +38,7 @@ import {
   childShapes,
 } from "./census.js";
 import { kindsForLevel } from "./kinds.js";
+import { racesForState } from "./candidates.js";
 import {
   makeHouseRace,
   makeStateLegislatorRace,
@@ -143,6 +146,16 @@ export async function fetchPathForPlace(placeId) {
  */
 export async function fetchRacesForPlace(placeId, stack = []) {
   const curated = racesForNode(placeId);
+
+  // Real candidates (data/candidates.js) for the place's state, when we have them.
+  const stateNode = pathToNode(placeId).find((n) => n.level === "state");
+  const real = stateNode
+    ? racesForState(stateNode.code).map((r) => ({
+        ...r,
+        scopeName: stateNode.name,
+        scopeLevel: "state",
+      }))
+    : [];
   const state = stack.find((j) => j.kind === "state");
   const generated = [];
   for (const j of stack) {
@@ -163,7 +176,7 @@ export async function fetchRacesForPlace(placeId, stack = []) {
       });
     }
   }
-  return [...curated, ...generated].map((r) => ({ source: "sample", ...r }));
+  return [...real, ...curated, ...generated].map((r) => ({ source: "sample", ...r }));
 }
 
 /**

@@ -7,13 +7,14 @@
 //   shared public geocoder (see js/geocode.js).
 
 import { searchPlaces } from "./geocode.js";
+import { searchCandidates } from "../data/candidates.js";
 
 const DEBOUNCE_MS = 300;
 
 export class SearchBox {
   /**
    * @param {object} refs - { form, input, list, status }
-   * @param {object} handlers - { onSelect(descriptor) }
+   * @param {object} handlers - { onSelect(descriptor), onSelectCandidate(slug) }
    */
   constructor(refs, handlers = {}) {
     this.refs = refs;
@@ -65,6 +66,14 @@ export class SearchBox {
       this._message("");
       return;
     }
+    // Candidates are searched locally, so they appear instantly.
+    this._candidates = candidateResults(q);
+    if (this._candidates.length) {
+      this.results = this._candidates;
+      this.activeIndex = 0;
+      this._render();
+      this._open();
+    }
     this._message("Searching…");
     this._timer = setTimeout(() => this._run(q), DEBOUNCE_MS);
   }
@@ -73,8 +82,9 @@ export class SearchBox {
     const seq = ++this._seq;
     this._abort = new AbortController();
     try {
-      const results = await searchPlaces(q, this._abort.signal);
+      const places = await searchPlaces(q, this._abort.signal);
       if (seq !== this._seq) return; // a newer search is in flight
+      const results = [...candidateResults(q), ...places];
       this.results = results;
       this.activeIndex = results.length ? 0 : -1;
       this._render();
@@ -90,12 +100,14 @@ export class SearchBox {
     } catch (err) {
       if (err.name === "AbortError") return;
       if (seq !== this._seq) return;
-      this.results = [];
+      this.results = candidateResults(q);
       this._render(
-        "We couldn't reach the search service. Check your connection, or pick a place from the lists instead."
+        this.results.length
+          ? null
+          : "We couldn't reach the search service. Check your connection, or pick a place from the lists instead."
       );
       this._open();
-      this._message("Search is unavailable right now.");
+      this._message("Place search is unavailable right now.");
     }
   }
 
@@ -131,7 +143,8 @@ export class SearchBox {
     // Nothing loaded yet (user typed fast and pressed Enter): fetch, then pick.
     this._message("Searching…");
     try {
-      const results = await searchPlaces(q);
+      const cands = candidateResults(q);
+      const results = [...cands, ...(await searchPlaces(q))];
       if (results.length) {
         this._choose(results[0]);
       } else {
@@ -146,12 +159,13 @@ export class SearchBox {
   }
 
   _choose(desc) {
-    this.refs.input.value = desc.label;
+    this.refs.input.value = desc.kind === "candidate" ? desc.name : desc.label;
     this.results = [];
     this._render();
     this._close();
     this._message("");
-    this.handlers.onSelect?.(desc);
+    if (desc.kind === "candidate") this.handlers.onSelectCandidate?.(desc.slug);
+    else this.handlers.onSelect?.(desc);
   }
 
   // ----- Rendering ---------------------------------------------------------
@@ -167,7 +181,7 @@ export class SearchBox {
       if (this.refs.input.value.trim().length >= 2) {
         list.appendChild(
           emptyItem(
-            "No U.S. places found. Try a city and state, like “Sugar Land, TX”."
+            "No U.S. places or candidates found. Try a city and state, like “Sugar Land, TX”."
           )
         );
       }
@@ -186,7 +200,8 @@ export class SearchBox {
 
       const sub = document.createElement("span");
       sub.className = "search-option-sub";
-      sub.textContent = subtitle(r);
+      sub.textContent = r.kind === "candidate" ? r.subtitle : subtitle(r);
+      if (r.kind === "candidate") li.classList.add("search-option-candidate");
 
       li.append(title, sub);
       li.addEventListener("mousedown", (e) => e.preventDefault()); // keep input focus
@@ -224,6 +239,16 @@ export class SearchBox {
   _message(text) {
     this.refs.status.textContent = text;
   }
+}
+
+// Candidate rows for the dropdown: { kind: "candidate", slug, name, subtitle }.
+function candidateResults(q) {
+  return searchCandidates(q, 3).map((c) => ({
+    kind: "candidate",
+    slug: c.slug,
+    name: c.name,
+    subtitle: ["Candidate", [c.role, c.party].filter(Boolean).join(" · ")].filter(Boolean).join(" · "),
+  }));
 }
 
 function emptyItem(text) {

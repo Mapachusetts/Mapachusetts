@@ -115,6 +115,8 @@
         <button class="chip-btn" type="button" data-jump="ma-medford">Medford, MA</button>
         <button class="chip-btn" type="button" data-jump="ma-boston">Boston, MA</button>
       </div>
+      <p class="quick-title">Massachusetts 2026: meet the candidates</p>
+      <div class="quick" id="heroCandidates"><!-- filled by js/app.js from data/candidates.js --></div>
       <ul class="hero-facts">
         <li><strong>50 states + DC</strong><span>every county, city and town</span></li>
         <li><strong>Real boundaries</strong><span>districts from the U.S. Census</span></li>
@@ -155,11 +157,14 @@
           your local election office.
         </p>
         <p>
-          <strong>Sample data:</strong> candidates, offices and events marked
-          “Sample” are placeholders, not real.
+          <strong>Sample data:</strong> anything marked “Sample” is a placeholder,
+          not real. Massachusetts governor and U.S. Senate candidates are researched.
         </p>
       </footer>
     </aside>
+
+    <!-- Candidate profile (js/candidate-sheet.js): covers the dossier when open -->
+    <aside class="cs" id="candidateSheet" aria-label="Candidate profile" hidden></aside>
 
     <!-- The layer dock: the stack of governments at this place -->
     <nav class="dock glass" id="dock" aria-label="Layers of government at this place" hidden></nav>

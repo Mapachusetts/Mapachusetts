@@ -18,20 +18,35 @@ halls that matter there.
   open their parent.
 - **U.S. only for now.** The world stays on the globe, but only the U.S. is lit
   up; everything else is greyed out and says it isn't available yet.
+- **Candidate profiles:** click a candidate on the ballot (or search a name) to
+  open a six-tab research profile: *In the News* (cited), *Funding*, *Career*,
+  *Issues* (with voting records), *Sources* and *Myths & Facts*. `?candidate=maura-healey`
+  is a shareable link.
+- **Voting precincts and wards** for any U.S. spot (Census 2020 voting districts).
 - **Night / Day** map themes, keyboard friendly (press `/` to search), phone
   layout with a bottom sheet.
 
-> **All races, candidates and events in this repo are SAMPLE placeholders**,
-> labeled "Sample" in the UI. The *boundaries and districts are real*.
+> **Real vs. sample data.** Boundaries and districts are real (Census). The
+> **Massachusetts 2026 governor and U.S. Senate races are real**: researched
+> candidates (Healey, Minogue, Markey, Deaton) with cited news, funding, issues,
+> careers, sources and myths, opened from the ballot, the search box or the
+> intro. Everything else (other states' races, local offices, events) is a
+> **SAMPLE placeholder**, labeled "Sample" in the UI.
 
 ## Run it
 
 Static site using ES modules, so serve it over HTTP (not `file://`):
 
 ```bash
-python3 -m http.server 8000
+python3 -m http.server 8000 --bind 127.0.0.1
 # open http://localhost:8000
 ```
+
+> **Keep `--bind 127.0.0.1`.** This folder also holds the Next.js app, whose
+> `.env` file contains secret keys (`SUPABASE_SERVICE_ROLE_KEY`). A plain
+> `http.server` serves every file here to anyone on your network, `.env`
+> included. `.env` is gitignored; just don't expose this folder. For the
+> Next.js app itself see the section at the bottom.
 
 Needs internet (map tiles, MapLibre, the Census service and the geocoder load
 from public hosts). Geolocation needs a secure context; `localhost` counts,
@@ -41,6 +56,8 @@ production needs HTTPS. No API keys anywhere.
 
 | I want to add or change...                      | Edit this | How |
 | ----------------------------------------------- | --------- | --- |
+| **Add or update a researched candidate**        | `supabase/seed-data/<slug>.json` (+ `lib/candidate-profiles.ts`), then `python3 scripts/export_candidates.py` | The export script rebuilds `data/political-data.generated.js`. Never edit that file by hand. See "Political data in the globe". |
+| **Which candidates are in which race**          | `data/candidates.js` → `RACES` | List candidate slugs per race; names and parties come from the profiles. |
 | **Real races / candidates** (your datasets)     | `data/civic.js` → `fetchRacesForPlace(placeId, stack)` | Return `Race` objects (`data/types.js`). Give each a **`kind`** (which layer decides it) and the UI files it under the right layer. Key district races on the ids in `stack` (e.g. `congress:4822`, `school:4819650`). |
 | **Real events / town halls**                    | `data/civic.js` → `fetchEventsForPlace(placeId)` | Return `Event` objects. Optional `kind` adds a colored layer tag. |
 | **Sample races/events for one place**           | `data/places.js` → that place's `races: []` / `events: []` | Use factories from `data/races.js` / `data/events.js`. Copy Sugar Land (TX) or Medford (MA). |
@@ -67,7 +84,8 @@ production needs HTTPS. No API keys anywhere.
    data/civic.js  (the ONE data seam)                        js/globe.js  js/ui.js
      ├─ geography ─► data/census.js        real boundaries     (map layers)  (dock, ballot,
      │               data/local-sources.js wards, council                     events, menus)
-     └─ politics  ─► data/places.js        SAMPLE races + events
+     └─ politics  ─► data/candidates.js    REAL researched races + candidates
+                     data/places.js        SAMPLE races + events (everything else)
 ```
 
 When you land on a place, the app asks the **Census Bureau (TIGERweb)** which
@@ -91,8 +109,15 @@ click it uses the city's center, and the UI says so.
 index.html         Page structure (command bar, browse panel, hero, dossier, dock)
 styles.css         All styling (Night/Day tokens at the top)
 
+scripts/
+  export_candidates.py  Teammates' candidate data -> data/political-data.generated.js
+
+prototypes/
+  ward-layer/      Original Leaflet voting-district map (kept for reference)
+
 js/
   app.js           Entry point: wires everything together
+  candidate-sheet.js  Candidate profile sheet (six tabs), ported from the React app
   navigation.js    "Where am I?" state + the exact point + menu choices
   globe.js         MapLibre 3D globe: world shading, clickable shapes, layer outlines, pins
   ui.js            Renders dock, ballot-by-layer, events, countdown, menus, messages
@@ -102,6 +127,8 @@ js/
 
 data/
   civic.js         THE data seam. Swap sample politics for real data here
+  candidates.js    Real candidates + the races they run in (merge logic from lib/candidates.ts)
+  political-data.generated.js  GENERATED from the research app's data. Don't edit
   census.js        Census TIGERweb client: stack, boundaries, county/city lists
   local-sources.js City ward / council-district sources (Boston, Chicago, NYC)
   kinds.js         The layers of government: names, icons, colors, explanations
@@ -141,9 +168,42 @@ data/
   rings; 44px+ touch targets; screen-reader labels; reduced-motion support.
   Full WCAG validation still needs testing with assistive technology and an
   accessibility review.
-- **Not covered yet:** U.S. territories (Puerto Rico, Guam, ...), precincts, and
-  automated tests. Wards exist only for the three cities in
-  `data/local-sources.js`.
+- **Precincts** come from the 2020 Census voting districts, which can be out of
+  date (precincts change often). Treat them as a guide and confirm your polling
+  place with your local election office. City *council* wards exist only for the
+  three cities in `data/local-sources.js`.
+- **Not covered yet:** U.S. territories (Puerto Rico, Guam, ...), real races
+  outside Massachusetts, and automated tests.
+
+## Political data in the globe
+
+The candidate research app (below) is the **source of truth** for political
+data. The globe is a static site with no build step, so it reads a generated
+copy:
+
+```
+supabase/seed-data/*.json        politician + cited news summary   ┐
+lib/candidate-profiles.ts        funding / issues / career / ...   ┴─► python3 scripts/export_candidates.py
+                                                                          │
+                                                       data/political-data.generated.js
+                                                                          │
+                           data/candidates.js  (merge by slug, same logic as lib/candidates.ts)
+                                  │                          │
+                    racesForState("MA") ──► ballot     getCandidate(slug) ──► js/candidate-sheet.js
+```
+
+**Add a candidate:** create `supabase/seed-data/<slug>.json` (copy an existing
+one), optionally add a curated profile to `lib/candidate-profiles.ts`, run
+`python3 scripts/export_candidates.py`, then list the slug in a race in
+`RACES` in `data/candidates.js`. The Next.js app picks up the same files
+(`node supabase/build-news-seed.mjs` rebuilds its SQL).
+
+**Live data (not wired yet):** the globe reads the exported file, not Supabase,
+so news summaries refresh whenever you re-run the export. To read Supabase
+live instead, replace the bodies of `fetchRacesForPlace` in `data/civic.js`
+with a call to Supabase's REST API using the **anon** key (it is designed to be
+public; Row Level Security gives read-only access). Never put the
+`service_role` key in browser code.
 
 ---
 

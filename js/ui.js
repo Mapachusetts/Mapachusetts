@@ -24,7 +24,8 @@ export class UI {
    *         tabBallot, tabEvents, ballotCount, eventsCount, ballotList,
    *         eventsList, status }
    * handlers: { onAscend(), onReset(), onJump(id), onThemeToggle(),
-   *             onFocusLayer(id), onSelectLayer(id), onHoverLayer(id|null) }
+   *             onFocusLayer(id), onSelectLayer(id), onHoverLayer(id|null),
+   *             onOpenCandidate(slug) }
    */
   constructor(refs, handlers = {}) {
     this.refs = refs;
@@ -405,7 +406,7 @@ export class UI {
     if (!sec) return;
     this.showTab("ballot");
     sec.open = true;
-    sec.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    sec.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
   }
 
   _raceCard(race) {
@@ -417,6 +418,7 @@ export class UI {
     const cat = CATEGORY_META[race.category];
     if (cat) tags.appendChild(tag(`${cat.icon} ${cat.label}`, "tag-type"));
     if (race.source === "sample") tags.appendChild(tag("Sample", "tag-sample"));
+    else if (race.candidates?.some((c) => c.slug)) tags.appendChild(tag("✓ Researched", "tag-real"));
     if (tags.children.length) card.appendChild(tags);
 
     const office = document.createElement("h4");
@@ -449,7 +451,19 @@ export class UI {
       cands.setAttribute("aria-label", "Candidates or choices");
       for (const c of race.candidates) {
         const li = document.createElement("li");
-        li.textContent = c.party ? `${c.name} (${c.party})` : c.name;
+        const label = c.party ? `${c.name} (${c.party})` : c.name;
+        if (c.slug) {
+          // A researched candidate: opens their full profile.
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "cand-btn";
+          btn.textContent = label;
+          btn.title = `Open ${c.name}'s profile`;
+          btn.addEventListener("click", () => this.handlers.onOpenCandidate?.(c.slug));
+          li.appendChild(btn);
+        } else {
+          li.textContent = label;
+        }
         cands.appendChild(li);
       }
       card.appendChild(cands);

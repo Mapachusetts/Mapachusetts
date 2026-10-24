@@ -98,9 +98,10 @@ function stateNode(code) {
 // ===== Massachusetts =====
 Object.assign(stateNode("MA"), {
   bbox: [-73.5, 41.2, -69.9, 42.9],
+  // Governor and U.S. Senate come from real candidate data (data/candidates.js),
+  // added by fetchRacesForPlace in data/civic.js. Only the placeholder ballot
+  // question stays here.
   races: [
-    makeGovernorRace("Massachusetts"),
-    makeSenateRace("Massachusetts"),
     makeBallotMeasure(
       "Sample Ballot Question 1",
       "Massachusetts",

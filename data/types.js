@@ -41,7 +41,7 @@
  * @typedef {Object} Race
  * @property {string} id
  * @property {string} office        "Governor of Texas", "Mayor of Medford", ...
- * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"} kind
+ * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"|"precinct"} kind
  *                                   WHICH LAYER OF GOVERNMENT decides it
  *                                   (KINDS in data/kinds.js). The Ballot tab is
  *                                   grouped by this, and it picks the color.
@@ -50,6 +50,9 @@
  *                                   (CATEGORY_META in data/races.js).
  * @property {string} [jurisdictionId]  Set on races generated for a district,
  *                                   e.g. "congress:4822".
+ * @property {{name: string, party: string|null, slug?: string}[]} candidates
+ *                                   A `slug` makes the candidate clickable: it
+ *                                   opens their profile (CandidateView).
  * @property {string|null} [term]    "4 years"; null for ballot questions.
  * @property {string|null} electionDate  "YYYY-MM-DD" or null if it varies.
  * @property {{name: string, party: string|null}[]} candidates
@@ -82,13 +85,35 @@
  */
 
 /**
+ * A researched candidate, merged from the Supabase seed data and the curated
+ * profile (data/candidates.js; same shape as CandidateView in lib/types.ts).
+ * Empty tabs are fine: missing data shows an empty state.
+ *
+ * @typedef {Object} CandidateView
+ * @property {string} slug       "maura-healey" (matches supabase/seed-data/<slug>.json)
+ * @property {string} name
+ * @property {string} role       "Governor of Massachusetts"
+ * @property {string} party      "Democratic" | "Republican" | ...
+ * @property {string|null} bio
+ * @property {string|null} photo         Official portrait URL (https only)
+ * @property {object|null} status        { statusType, statusLabel, termInfo, ... }
+ * @property {string|null} openSecretsUrl
+ * @property {object[]} career           [{ years, title, org, description }]
+ * @property {object|null} funding       { total, topIndustry, smallDonorPct, sources[] ... }
+ * @property {object[]} opinions         issue topics -> sub-issues -> vote records
+ * @property {object[]} sources          [{ name, url, bias, type, description }]
+ * @property {object[]} misconceptions   [{ category, myth, reality, sourceUrl ... }]
+ * @property {object|null} news          { summary (with [n] markers), citations[], generated_at }
+ */
+
+/**
  * One layer of government covering a point: a state, a congressional district,
  * a school district, a ward... Produced by data/census.js (and
  * data/local-sources.js for wards). A place's "stack" is the list of these.
  *
  * @typedef {Object} Jurisdiction
  * @property {string} id        "congress:4822", "county:48157", ... (unique)
- * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"} kind
+ * @property {"country"|"state"|"congress"|"senate"|"house"|"county"|"city"|"school"|"ward"|"precinct"} kind
  * @property {string} name      "Fort Bend County"
  * @property {string} [short]   Compact label for chips: "TX-22"
  * @property {string} [type]    "City", "Town", "Unified school district"
