@@ -1,0 +1,85 @@
+{
+  "politician": {
+    "slug": "ed-markey",
+    "name": "Ed Markey",
+    "party": "Democratic",
+    "state": "MA",
+    "current_office": "U.S. Senator",
+    "bio": "Ed Markey is a Democrat who has served as a U.S. Senator from Massachusetts since 2013, when he won a special election to fill the seat vacated by John Kerry. In 2026 he is seeking re-election against Republican John Deaton after defeating Rep. Seth Moulton in the Sept. 1 Democratic primary. He previously represented Massachusetts in the U.S. House from 1976 to 2013 and served in the Massachusetts House of Representatives from 1973 to 1976.",
+    "career_history": [
+      { "period": "1968-1973", "role": "U.S. Army Reserve (Specialist 4)" },
+      { "period": "1973-1976", "role": "Member, Massachusetts House of Representatives" },
+      { "period": "1976-2013", "role": "U.S. Representative from Massachusetts (7th district; 5th district in 2013)" },
+      { "period": "2007-2011", "role": "Chair, House Select Committee on Energy Independence and Global Warming" },
+      { "period": "2013-present", "role": "U.S. Senator from Massachusetts" },
+      { "period": "2025-present", "role": "Ranking Member, Senate Small Business Committee" }
+    ]
+  },
+  "summary": "Sen. Ed Markey and Republican John Deaton met Oct. 13 at WBZ-TV in what outlets described as their only scheduled debate before the Nov. 3 election [1][2]. Markey repeatedly sought to tie Deaton to President Trump, saying his opponent would be \"a blank check for Donald Trump\" and arguing that a Deaton win would help preserve the Republican Senate majority [1][3]. Markey invoked Trump more than 40 times over the hour-long debate, according to Boston.com, and called Deaton's effort to be both an independent and a Republican an oxymoron [1][2]. Deaton countered that he has never voted for, supported, or endorsed Trump, and accused Markey of misrepresenting his record and being part of a hyper-partisan Washington [1][3].\n\nOn policy, Markey pressed for Medicare for All, cited Medicaid cuts in the Republican-passed One Big Beautiful Bill Act, and defended the Green New Deal while criticizing the Trump administration for halting offshore wind projects [2][3]. Deaton argued that Markey has been unable to win over most Senate Democrats on Medicare for All, proposed breaking up large insurance companies instead, and said Markey's energy agenda relies on costly mandates, favoring nuclear power and natural gas [1][3]. Deaton also questioned whether the 80-year-old senator could be effective over another six-year term and raised Markey's 2002 vote to authorize the Iraq War, which Markey has called a mistake, while Markey dismissed such attacks as red herrings [1][2]. Both candidates voiced support for safeguards on artificial intelligence, and Markey declined Deaton's on-stage request for a second debate in western Massachusetts [2].\n\nPolling reported during the period showed Markey with a wide lead: a MassINC poll cited by MassLive had him ahead 54% to 28%, a UMass Amherst/WCVB survey taken Oct. 5 to 12 showed him leading 56% to 29%, and a Suffolk University/Boston Globe poll put his support at about 60%, with nearly 45% of respondents saying they had never heard of Deaton [4][5][6]. MassLive also reported that Markey had about $1.34 million on hand as of Aug. 12, compared with roughly $712,000 for Deaton, who had loaned his own campaign $1 million [4].\n\nIn the Senate, Markey and Sen. Jeff Merkley introduced a joint resolution of disapproval on Oct. 15 seeking to block the Trump administration's civilian nuclear agreement with Saudi Arabia over concerns that it lacks adequate guardrails against weapons development, though The Hill reported the measure faces long odds because reversing the deal would require Trump's signature [7]. Markey also joined other members of the Massachusetts congressional delegation in asking the Department of Homeland Security's inspector general to investigate conditions at ICE's Burlington field office, while a DHS spokesperson said the facility complies with state and local laws and called claims of inadequate conditions false [8].",
+  "citations": [
+    {
+      "n": 1,
+      "title": "Markey, Deaton met in their only Senate debate. Here are 3 takeaways.",
+      "url": "https://www.bostonglobe.com/2026/10/13/metro/massachusetts-senate-debate-markey-deaton-wbz/",
+      "source": "The Boston Globe",
+      "published_at": "2026-10-13",
+      "snippet": "Recaps the WBZ-TV debate, in which Markey tied Deaton to Trump and the GOP Senate majority, while Deaton criticized Markey's decades-long record, questioned whether he could serve another term, and cited his 2002 Iraq War vote."
+    },
+    {
+      "n": 2,
+      "title": "Sen. Ed Markey and John Deaton square off in only debate before election",
+      "url": "https://www.boston.com/news/politics/2026/10/13/ed-markey-john-deaton-senate-debate/",
+      "source": "Boston.com",
+      "published_at": "2026-10-13",
+      "snippet": "Reports Markey invoked Trump more than 40 times in the debate, called Deaton's independent-Republican pitch an oxymoron, pushed Medicare for All and AI safeguards, and declined Deaton's request for a second debate."
+    },
+    {
+      "n": 3,
+      "title": "Trump loomed large in debate between Sen. Markey and Repulican challenger Deaton",
+      "url": "https://www.wbur.org/news/2026/10/14/senate-markey-deaton-debate-trump-healthcare-energy-massachusetts",
+      "source": "WBUR",
+      "published_at": "2026-10-14",
+      "snippet": "Reports Markey argued Deaton would help continue the GOP Senate majority and cited Medicaid cuts and halted offshore wind projects, while Deaton said he never backed Trump and favored nuclear power and natural gas."
+    },
+    {
+      "n": 4,
+      "title": "Here's who's funding the Mass. U.S. Senate race",
+      "url": "https://www.yahoo.com/news/politics/articles/funding-mass-u-senate-race-152458605.html",
+      "source": "MassLive (via Yahoo News)",
+      "published_at": "2026-10-13",
+      "snippet": "MassLive analysis of FEC filings found Markey had $1.34 million on hand as of Aug. 12 versus about $712,000 for Deaton, who loaned his campaign $1 million; cites a MassINC poll showing Markey ahead 54% to 28%."
+    },
+    {
+      "n": 5,
+      "title": "Trump's shadow affects Minogue negatively in Mass. governor's race, UMass Amherst/WCVB poll finds",
+      "url": "https://www.wcvb.com/article/umass-poll-healey-minogue-trump-markey-deaton-election-2026/74167943",
+      "source": "WCVB",
+      "published_at": "2026-10-19",
+      "snippet": "UMass Amherst/WCVB poll of 800 registered voters, conducted Oct. 5 to 12, found 56% favoring Markey for a third term compared with 29% for Republican John Deaton."
+    },
+    {
+      "n": 6,
+      "title": "Suffolk/Globe poll: 42% say Mass. has become worse place to live",
+      "url": "https://www.bostonglobe.com/2026/10/20/metro/healey-minogue-globe-suffolk-poll-2026-election/",
+      "source": "The Boston Globe",
+      "published_at": "2026-10-20",
+      "snippet": "Suffolk/Globe poll of 500 likely voters found about 60% backing Markey, nearly 30 points ahead of Deaton, and nearly 45% of respondents said they had never heard of Deaton."
+    },
+    {
+      "n": 7,
+      "title": "Democratic senators set up vote on blocking Saudi nuclear deal",
+      "url": "https://www.yahoo.com/news/politics/articles/democratic-senators-set-vote-blocking-205259627.html",
+      "source": "The Hill (via Yahoo News)",
+      "published_at": "2026-10-15",
+      "snippet": "Reports Markey and Sen. Jeff Merkley introduced a joint resolution of disapproval to block Trump's civilian nuclear deal with Saudi Arabia, citing weak safeguards; the measure faces long odds since it would need Trump's signature."
+    },
+    {
+      "n": 8,
+      "title": "Massachusetts lawmakers seek independent probe of Burlington ICE facility",
+      "url": "https://www.wcvb.com/article/massachusetts-lawmakers-burlington-ice-facility-probe/74163210",
+      "source": "WCVB",
+      "published_at": "2026-10-16",
+      "snippet": "Reports Markey was among Massachusetts lawmakers who asked the DHS inspector general to inspect alleged inhumane conditions at ICE's Burlington facility; a DHS spokesperson called claims of inadequate conditions false."
+    }
+  ]
+}
