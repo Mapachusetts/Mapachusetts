@@ -1,73 +1,51 @@
 // data/events.js
-// Factory helpers for civic events (town halls, meetings, debates, voter
-// registration drives, election days, ...).
+// Event types and the one event that applies to everyone.
 //
-// Event shape:
-//   id          - unique-ish id
-//   title       - short name
-//   kind        - OPTIONAL layer of government that holds it (a key of KINDS in
-//                 data/kinds.js, e.g. "city", "school", "congress"). If omitted,
-//                 it is taken from the place the event is attached to.
-//   type        - key of EVENT_TYPES below
-//   start       - ISO 8601 date-time string (local time of the event)
-//   end         - optional ISO string
-//   venue       - where it happens ("City Hall, Council Chambers")
-//   virtual     - true if it can be joined online
-//   description - one or two plain-language sentences
-//   url         - optional link for details / RSVP
-//   source      - "sample" for mock data; real feeds should set their own name
+// Event shape (full reference in data/types.js):
+//   id          unique id
+//   title       short name
+//   kind        layer of government that holds it (key of KINDS in data/kinds.js)
+//   type        key of EVENT_TYPES below
+//   start       ISO 8601 local date-time, "2026-11-03T00:00:00"
+//   end         optional ISO string
+//   allDay      true when there is no specific start time
+//   venue       where it happens
+//   virtual     true if it can be joined online
+//   description one or two sentences
+//   url         link for details
+//   source      who published it ("Boston City Council (Legistar)")
 //
-// The sample events use dates RELATIVE TO TODAY (see daysFromNow) so a demo
-// never shows a stale calendar. Real feeds should return real dates.
-// Election Day events use the real general-election date.
+// REAL meetings come from data/events.generated.js (scripts/export_events.py,
+// city council and committee calendars published through Legistar). This file
+// used to hold invented sample events; they were removed.
 
+// `icon` is a key into js/icons.js.
 export const EVENT_TYPES = {
-  townhall: { label: "Town hall", icon: "🎤", color: "#b45309" },
-  meeting: { label: "Public meeting", icon: "🏛️", color: "#1d4ed8" },
-  debate: { label: "Debate / forum", icon: "💬", color: "#7c3aed" },
-  voting: { label: "Voting", icon: "🗳️", color: "#be123c" },
-  hearing: { label: "Public hearing", icon: "📣", color: "#0e7490" },
-  community: { label: "Community", icon: "🤝", color: "#15803d" },
+  townhall: { label: "Town hall", icon: "townhall", color: "#b45309" },
+  meeting: { label: "Public meeting", icon: "meeting", color: "#1d4ed8" },
+  debate: { label: "Debate / forum", icon: "debate", color: "#7c3aed" },
+  voting: { label: "Voting", icon: "voting", color: "#be123c" },
+  hearing: { label: "Public hearing", icon: "hearing", color: "#0e7490" },
+  community: { label: "Community", icon: "community", color: "#15803d" },
 };
 
-let _seq = 0;
-const uid = () => `evt-${++_seq}`;
-
-// ISO string for N days from today at the given local hour/minute.
-export function daysFromNow(days, hour = 18, minute = 30) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  d.setHours(hour, minute, 0, 0);
-  return toLocalIso(d);
-}
-
-// Build an ISO-like local string without converting to UTC.
-export function toLocalIso(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(
-    d.getHours()
-  )}:${p(d.getMinutes())}:00`;
-}
-
-export function makeEvent(fields) {
+/**
+ * General Election Day. Deliberately has no opening/closing hours: polling
+ * hours differ by state and sometimes by county, and we do not list them.
+ */
+export function electionDayEvent(date = "2026-11-03") {
   return {
-    id: uid(),
-    type: "meeting",
-    virtual: false,
-    source: "sample",
-    ...fields,
-  };
-}
-
-export function electionDayEvent(date = "2026-11-03", scopeLabel = "") {
-  return makeEvent({
-    title: `General Election Day${scopeLabel ? ` (${scopeLabel})` : ""}`,
+    id: `election-day-${date}`,
+    title: "General Election Day",
     type: "voting",
     kind: "country",
-    start: `${date}T07:00:00`,
-    end: `${date}T20:00:00`,
-    venue: "Your assigned polling place (check your local election office)",
+    start: `${date}T00:00:00`,
+    allDay: true,
+    venue: "Your polling place",
+    virtual: false,
     description:
-      "Polls are open on Election Day. Hours vary by state, so confirm yours with your local election office.",
-  });
+      "Polling hours differ by state. Confirm your hours, your polling place, and early or mail voting options with your local election office.",
+    url: "https://www.usa.gov/election-office",
+    source: "Election date: federal law (first Tuesday after the first Monday in November)",
+  };
 }

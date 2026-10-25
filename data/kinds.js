@@ -8,6 +8,9 @@
 //   color - bright version, used on the dark map and the dock
 //   ink   - darker version, used for text/borders on white cards
 //
+// `icon` is a key into js/icons.js (the custom icon set); it matches the kind's
+// own key so the UI can simply ask for icon(kind).
+//
 // `blurb` is generic civics education (what this kind of office/district does),
 // not claims about a specific place, so it is safe for every location.
 
@@ -15,7 +18,7 @@ export const KINDS = {
   country: {
     label: "Country",
     tag: "Nation",
-    icon: "🦅",
+    icon: "country",
     color: "#38bdf8",
     ink: "#0369a1",
     blurb:
@@ -24,7 +27,7 @@ export const KINDS = {
   state: {
     label: "State",
     tag: "State",
-    icon: "⭐",
+    icon: "state",
     color: "#818cf8",
     ink: "#4338ca",
     blurb:
@@ -33,7 +36,7 @@ export const KINDS = {
   congress: {
     label: "U.S. House district",
     tag: "Congress",
-    icon: "🏛️",
+    icon: "congress",
     color: "#f472b6",
     ink: "#be185d",
     blurb:
@@ -42,7 +45,7 @@ export const KINDS = {
   senate: {
     label: "State senate district",
     tag: "State Senate",
-    icon: "⚖️",
+    icon: "senate",
     color: "#fb923c",
     ink: "#c2410c",
     blurb:
@@ -51,7 +54,7 @@ export const KINDS = {
   house: {
     label: "State house district",
     tag: "State House",
-    icon: "🏠",
+    icon: "house",
     color: "#fbbf24",
     ink: "#b45309",
     blurb:
@@ -60,7 +63,7 @@ export const KINDS = {
   county: {
     label: "County",
     tag: "County",
-    icon: "🗂️",
+    icon: "county",
     color: "#2dd4bf",
     ink: "#0f766e",
     blurb:
@@ -69,7 +72,7 @@ export const KINDS = {
   city: {
     label: "City or town",
     tag: "City / Town",
-    icon: "🏙️",
+    icon: "city",
     color: "#4ade80",
     ink: "#15803d",
     blurb:
@@ -78,7 +81,7 @@ export const KINDS = {
   school: {
     label: "School district",
     tag: "Schools",
-    icon: "🎓",
+    icon: "school",
     color: "#a3e635",
     ink: "#4d7c0f",
     blurb:
@@ -87,7 +90,7 @@ export const KINDS = {
   ward: {
     label: "City council district",
     tag: "Ward / District",
-    icon: "🧭",
+    icon: "ward",
     color: "#c084fc",
     ink: "#7e22ce",
     blurb:
@@ -96,7 +99,7 @@ export const KINDS = {
   precinct: {
     label: "Voting precinct",
     tag: "Precinct",
-    icon: "📍",
+    icon: "precinct",
     color: "#94a3b8",
     ink: "#475569",
     blurb:
@@ -123,7 +126,7 @@ export function kindMeta(kind) {
     KINDS[kind] || {
       label: kind,
       tag: kind,
-      icon: "📍",
+      icon: "pin",
       color: "#94a3b8",
       ink: "#475569",
       blurb: "",

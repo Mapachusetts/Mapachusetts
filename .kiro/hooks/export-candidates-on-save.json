@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Re-export candidate data for the globe",
+      "trigger": "PostFileSave",
+      "description": "Rebuilds data/political-data.generated.js whenever candidate source data is saved, so the globe never serves stale data.",
+      "matcher": "(supabase/seed-data/.*\\.json|lib/candidate-profiles\\.ts)$",
+      "action": {
+        "type": "command",
+        "command": "python3 scripts/export_candidates.py"
+      }
+    }
+  ]
+}

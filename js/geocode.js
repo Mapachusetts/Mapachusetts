@@ -11,6 +11,13 @@
 // Fair use: the public instance is shared, so keep the debounce in search.js
 // and don't hammer it. For production, self-host or use a paid provider.
 //
+// WHAT YOU CAN TYPE: a city, county or state; a 5-digit ZIP code; or a street
+// address ("1600 Pennsylvania Ave NW, Washington"). A street address is the most
+// precise way to find your districts, and the most sensitive thing this app
+// sends anywhere: it goes to the geocoder as plain text. Upgrade path: proxy the
+// U.S. Census geocoder (geocoding.geo.census.gov) from your own server so
+// addresses stay with the U.S. government; it has no browser (CORS) access.
+//
 // SCOPE: United States only. Searches are limited to a bounding box around the
 // 50 states + DC, and results are also filtered by country code (the box
 // overlaps Canada and Mexico). Widen both to support more countries.
@@ -41,6 +48,9 @@ function toDescriptor(feature) {
     state: p.state || "",
     county: p.county || "",
     city: p.city || "",
+    street: p.street || "",
+    housenumber: p.housenumber || "",
+    postcode: p.postcode || "",
     lng,
     lat,
     extent,
@@ -51,6 +61,12 @@ function toDescriptor(feature) {
 
 // Human-friendly label such as "Medford, Middlesex County, Massachusetts, United States".
 export function describe(d) {
+  // Street addresses read as "1600 Pennsylvania Avenue NW, Washington, DC".
+  if ((d.type === "house" || d.type === "street") && d.street) {
+    const line = [d.housenumber, d.street].filter(Boolean).join(" ");
+    return [line, d.city, d.state].filter(Boolean).join(", ");
+  }
+  if (d.isZip) return [`ZIP ${d.name}`, d.city, d.state].filter(Boolean).join(", ");
   const county =
     d.county && d.countryCode === "US" && !/county|parish|borough/i.test(d.county)
       ? `${d.county} County`
@@ -86,31 +102,54 @@ function buildUrl(path, params) {
 export async function searchPlaces(query, signal) {
   const q = query.trim();
   if (q.length < 2) return [];
-  const res = await fetch(
-    buildUrl("/api/", {
-      q,
-      limit: 15, // fetch extra: some results are dropped by the U.S. filter
-      lang: "en",
-      bbox: US_BBOX,
-      layer: PLACE_LAYERS,
-    }),
-    { signal }
-  );
-  if (!res.ok) throw new Error(`Search failed (${res.status})`);
-  const data = await res.json();
+
+  const isZip = /^\d{5}(-\d{4})?$/.test(q);
+  const looksLikeAddress = /^\d+[A-Za-z]?\s+\S+/.test(q) && !isZip;
+
+  // Places always; street addresses too when the text starts with a number;
+  // ZIP codes need an unfiltered request (Photon files them under "other").
+  const requests = [];
+  if (isZip) {
+    requests.push(
+      fetchJson(buildUrl("/api/", { q: q.slice(0, 5), limit: 5, lang: "en", bbox: US_BBOX }), signal)
+    );
+  } else {
+    requests.push(
+      fetchJson(buildUrl("/api/", { q, limit: 15, lang: "en", bbox: US_BBOX, layer: PLACE_LAYERS }), signal)
+    );
+    if (looksLikeAddress) {
+      requests.unshift(
+        fetchJson(buildUrl("/api/", { q, limit: 6, lang: "en", bbox: US_BBOX, layer: ["house", "street"] }), signal)
+      );
+    }
+  }
+  const responses = await Promise.all(requests.map((r) => r.catch((err) => (err.name === "AbortError" ? Promise.reject(err) : { features: [] }))));
 
   const seen = new Set();
   const results = [];
-  for (const f of data.features || []) {
-    const d = toDescriptor(f);
-    if (!d.name || d.countryCode !== "US") continue;
-    const key = d.label.toLowerCase();
-    if (seen.has(key)) continue; // Photon sometimes returns near-duplicates
-    seen.add(key);
-    results.push(d);
-    if (results.length >= 6) break;
+  for (const data of responses) {
+    for (const f of data.features || []) {
+      const d = toDescriptor(f);
+      if (isZip) {
+        if (d.type !== "other" || d.name !== q.slice(0, 5)) continue;
+        d.isZip = true;
+        d.label = describe(d);
+      }
+      if (!d.name || d.countryCode !== "US") continue;
+      const key = d.label.toLowerCase();
+      if (seen.has(key)) continue; // Photon sometimes returns near-duplicates
+      seen.add(key);
+      results.push(d);
+      if (results.length >= 6) return results;
+    }
   }
   return results;
+}
+
+async function fetchJson(url, signal) {
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`Search failed (${res.status})`);
+  return res.json();
 }
 
 /**

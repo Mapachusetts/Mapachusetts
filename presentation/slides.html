@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mapachusetts: Hackachusetts presentation</title>
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; color: #0f1b2d; }
+  .slide {
+    width: 13.333in; height: 7.5in; padding: 0.7in 0.9in;
+    page-break-after: always; break-after: page;
+    display: flex; flex-direction: column; justify-content: center;
+    background: #ffffff; position: relative; overflow: hidden;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .dark { background: #0b1830; color: #f2f6ff; }
+  .tag { font-size: 14pt; letter-spacing: 0.12em; text-transform: uppercase; color: #2f6fed; font-weight: 700; margin-bottom: 14px; }
+  .dark .tag { color: #7fb0ff; }
+  h1 { font-size: 54pt; margin: 0 0 14px; line-height: 1.05; }
+  h2 { font-size: 36pt; margin: 0 0 26px; line-height: 1.15; }
+  p.lead { font-size: 24pt; line-height: 1.35; margin: 0; max-width: 10.5in; }
+  ul { margin: 0; padding-left: 0.35in; font-size: 21pt; line-height: 1.45; }
+  li { margin-bottom: 10px; }
+  li small { display: block; font-size: 15pt; color: #4a5a73; line-height: 1.3; margin-top: 2px; }
+  .dark li small { color: #a9bddb; }
+  .cols { display: flex; gap: 0.5in; }
+  .col { flex: 1; background: #f1f5fc; border-radius: 14px; padding: 22px 26px; }
+  .dark .col { background: #14284a; }
+  .col h3 { margin: 0 0 10px; font-size: 20pt; color: #1d4fc4; }
+  .dark .col h3 { color: #7fb0ff; }
+  .col p, .col li { font-size: 17pt; line-height: 1.4; margin: 0 0 6px; }
+  .col ul { font-size: 17pt; padding-left: 0.28in; }
+  .foot { position: absolute; left: 0.9in; bottom: 0.4in; font-size: 12pt; color: #7b8aa3; }
+  .dark .foot { color: #6f86ad; }
+  .num { position: absolute; right: 0.9in; bottom: 0.4in; font-size: 12pt; color: #7b8aa3; }
+  ol { margin: 0; padding-left: 0.4in; font-size: 24pt; line-height: 1.5; }
+  ol li { margin-bottom: 8px; }
+  .note { font-size: 15pt; color: #4a5a73; margin-top: 22px; max-width: 11in; }
+  .dark .note { color: #a9bddb; }
+</style>
+</head>
+<body>
+
+<!-- 1 Title -->
+<section class="slide dark">
+  <div class="tag">Hackachusetts &middot; Civic Action track</div>
+  <h1>Mapachusetts</h1>
+  <p class="lead">Politics, mapped to where you live. An interactive 3D globe that shows every layer of government covering a spot, plus the races and candidates that matter there.</p>
+  <div class="foot">Built with Kiro</div>
+</section>
+
+<!-- 2 Problem -->
+<section class="slide">
+  <div class="tag">The problem</div>
+  <h2>Where you live decides who represents you. That is hard to see.</h2>
+  <ul>
+    <li>One address can sit in a congressional district, a state senate district, a state house district, a county, a town, a school district and a ward.
+      <small>Each layer has its own officials and its own races.</small></li>
+    <li>Voters rarely see all of those layers in one place.</li>
+    <li>Good, cited information about candidates is scattered across news sites and campaign pages.</li>
+  </ul>
+  <div class="num">2</div>
+</section>
+
+<!-- 3 Solution -->
+<section class="slide">
+  <div class="tag">The solution</div>
+  <h2>Pick a place on a globe. See the whole stack.</h2>
+  <ul>
+    <li>Find a place four ways: <b>search</b>, <b>Use my location</b>, <b>browse menus</b> (State, County, City), or <b>click the globe</b>.</li>
+    <li>A <b>layer dock</b> of color-coded chips, each with a glowing outline on the map.</li>
+    <li><b>Ballot by layer</b>: what each level of government does and the races it decides.</li>
+    <li>An <b>Events</b> tab for town halls and meetings, and an Election Day countdown.</li>
+  </ul>
+  <div class="num">3</div>
+</section>
+
+<!-- 4 Candidate research -->
+<section class="slide">
+  <div class="tag">Candidate research</div>
+  <h2>Click a candidate. Get a cited, six-tab profile.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Six tabs</h3>
+      <ul>
+        <li>In the News (cited)</li>
+        <li>Funding</li>
+        <li>Career</li>
+        <li>Issues, with voting records</li>
+        <li>Sources</li>
+        <li>Myths &amp; Facts</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Real Massachusetts 2026 races</h3>
+      <ul>
+        <li>Governor: Maura Healey, Mike Minogue</li>
+        <li>U.S. Senate: Ed Markey, John Deaton</li>
+        <li>Every profile has a shareable link</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Built to be checked</h3>
+      <ul>
+        <li>News summaries carry numbered citations</li>
+        <li>Citations are validated when the data is built</li>
+        <li>Only headlines, links, snippets and summaries are stored</li>
+      </ul>
+    </div>
+  </div>
+  <div class="num">4</div>
+</section>
+
+<!-- 5 Live demo -->
+<section class="slide dark">
+  <div class="tag">Live demo</div>
+  <h2>What we will show</h2>
+  <ol>
+    <li>Open the globe and drill into Massachusetts.</li>
+    <li>Search an address. Watch the layer stack appear.</li>
+    <li>Click a layer chip to highlight its boundary.</li>
+    <li>Open the governor race and a candidate profile.</li>
+    <li>Read the cited news and check a source.</li>
+  </ol>
+  <div class="num">5</div>
+</section>
+
+<!-- 6 How it works -->
+<section class="slide">
+  <div class="tag">How it works</div>
+  <h2>Real boundaries, real research, one data seam.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Globe app</h3>
+      <ul>
+        <li>MapLibre 3D globe, OpenFreeMap basemaps</li>
+        <li>U.S. Census TIGERweb for districts, counties, towns and precincts</li>
+        <li>Ward data for Boston, Chicago and NYC</li>
+        <li>Photon geocoder for search</li>
+        <li>No API keys needed</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Research app</h3>
+      <ul>
+        <li>Next.js (App Router) and Supabase</li>
+        <li>RSS news ingest into Supabase</li>
+        <li>Claude-written summaries with checked citations</li>
+        <li>Built for Vercel and Supabase hosting</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>One source of truth</h3>
+      <ul>
+        <li>Candidate data lives in the research app</li>
+        <li>A script exports it for the globe</li>
+        <li>Both apps show the same candidates</li>
+      </ul>
+    </div>
+  </div>
+  <div class="num">6</div>
+</section>
+
+<!-- 7 Honest scope -->
+<section class="slide">
+  <div class="tag">What is real, and what is not</div>
+  <h2>We label our data honestly.</h2>
+  <ul>
+    <li><b>Real:</b> Census boundaries, and the Massachusetts 2026 governor and U.S. Senate races.</li>
+    <li><b>Sample:</b> other states' races, local offices and events. They are labeled "Sample" in the app.</li>
+    <li><b>U.S. only</b> for now. Everything else on the globe is greyed out.</li>
+    <li>Districts and precincts can lag reality, so the app tells people to confirm with their local election office.</li>
+  </ul>
+  <div class="num">7</div>
+</section>
+
+<!-- 8 Built with Kiro -->
+<section class="slide dark">
+  <div class="tag">Built with Kiro</div>
+  <h2>Four teammates, three Kiro tools, one app.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Tools</h3>
+      <ul>
+        <li>Kiro IDE</li>
+        <li>Kiro CLI</li>
+        <li>Kiro Web</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>What Kiro did</h3>
+      <ul>
+        <li>Built the 3D globe, then refined it</li>
+        <li>Scaffolded the Next.js and Supabase app and the cited news pipeline</li>
+        <li>Merged teammate branches into one app</li>
+        <li>Flagged an exposed key; secrets moved out of git</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>In the repo (.kiro)</h3>
+      <ul>
+        <li>Steering: product, tech, data rules</li>
+        <li>Hook: re-export candidate data on save</li>
+      </ul>
+    </div>
+  </div>
+  <div class="num">8</div>
+</section>
+
+<!-- 9 Team and next -->
+<section class="slide">
+  <div class="tag">Team and what is next</div>
+  <h2>Mapachusetts team</h2>
+  <p class="lead" style="font-size:20pt">Rayna (wrayna) &middot; Priscila Machado &middot; Senny Lu (Wixisiz) &middot; Shamus Duffey</p>
+  <div style="height:26px"></div>
+  <ul>
+    <li>Real races beyond Massachusetts, and real local offices and events.</li>
+    <li>Read Supabase live in the globe instead of an exported file.</li>
+    <li>More cities with ward and council-district data.</li>
+    <li>U.S. territories, and automated tests.</li>
+  </ul>
+  <div class="num">9</div>
+</section>
+
+</body>
+</html>

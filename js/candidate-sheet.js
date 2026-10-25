@@ -9,15 +9,33 @@
 // safeUrl(), exactly like the React version, so data can never inject markup.
 
 import { getCandidate, initials } from "../data/candidates.js";
+import { icon } from "./icons.js";
 
-const TABS = [
-  { id: "news", label: "In the News", icon: "📰" },
-  { id: "funding", label: "Funding", icon: "💰" },
-  { id: "career", label: "Career", icon: "🧭" },
-  { id: "opinions", label: "Issues", icon: "🗣️" },
-  { id: "sources", label: "Sources", icon: "🔗" },
-  { id: "misconceptions", label: "Myths & Facts", icon: "🔍" },
+// `icon` is a key into js/icons.js.
+const ALL_TABS = [
+  { id: "news", label: "In the News", icon: "news" },
+  { id: "funding", label: "Money", icon: "funding" },
+  { id: "career", label: "Background", icon: "career" },
+  { id: "opinions", label: "Issues", icon: "issues" },
+  { id: "sources", label: "Sources", icon: "sources" },
+  { id: "misconceptions", label: "Myths & Facts", icon: "myths" },
 ];
+let TABS = ALL_TABS; // narrowed per candidate in open()
+
+// Issue topic ids (from lib/candidate-profiles.ts) -> custom icon keys.
+const TOPIC_ICONS = {
+  healthcare: "healthcare",
+  housing: "housing",
+  immigration: "immigration",
+  education: "education_topic",
+  "foreign-policy": "foreign-policy",
+  infrastructure: "infrastructure",
+  "public-safety": "public-safety",
+  economy: "economy",
+  environment: "environment",
+  taxes: "taxes",
+  technology: "technology",
+};
 
 const BIAS_LABELS = {
   nonpartisan: "Nonpartisan",
@@ -37,7 +55,7 @@ const TYPE_LABELS = {
   academic: "Academic",
 };
 
-const STATUS_ICONS = { incumbent: "🏛️", running: "🗳️", former: "📋" };
+// (status icons are keys into js/icons.js: incumbent, running, former)
 
 // ----- Tiny DOM helper ------------------------------------------------------------
 
@@ -48,6 +66,7 @@ function h(tag, attrs, ...children) {
     if (v === false || v == null) continue;
     if (k === "class") el.className = v;
     else if (k === "text") el.textContent = v;
+    else if (k === "html") el.innerHTML = v; // ONLY for trusted icon markup from js/icons.js
     else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
     else el.setAttribute(k, v === true ? "" : v);
   }
@@ -109,8 +128,26 @@ const timeOf = (value) => (value ? Date.parse(value) : Number.NaN);
 /** Open on the freshest tab that has data. */
 function defaultTab(c) {
   if (c.news) return "news";
-  if (c.funding) return "funding";
+  if (c.finance) return "funding";
   return "career";
+}
+
+/** The big status card needs real text; generated nominees only get the badge. */
+const hasStatusCard = (st) => !!(st && (st.plainEnglish || st.currentTitle));
+
+/** Only show tabs that have something real to show. */
+function tabsFor(c) {
+  return ALL_TABS.filter((t) => {
+    switch (t.id) {
+      case "news": return !!c.news;
+      case "funding": return !!c.finance;
+      case "career": return !!(c.bio || hasStatusCard(c.status) || c.career.length);
+      case "opinions": return c.opinions.length > 0;
+      case "sources": return c.sources.length > 0 || !!c.news;
+      case "misconceptions": return c.misconceptions.length > 0;
+      default: return true;
+    }
+  });
 }
 
 // ----- The sheet ------------------------------------------------------------------
@@ -141,7 +178,9 @@ export class CandidateSheet {
     if (!c) return false;
     if (!this.isOpen) this._returnFocus = document.activeElement;
     this.slug = slug;
-    this.tab = defaultTab(c);
+    TABS = tabsFor(c);
+    if (!TABS.length) TABS = ALL_TABS.filter((t) => t.id === "career");
+    this.tab = TABS.some((t) => t.id === defaultTab(c)) ? defaultTab(c) : TABS[0].id;
     this.root.hidden = false;
     document.body.classList.add("has-candidate");
     this._render(c);
@@ -212,7 +251,7 @@ export class CandidateSheet {
   _render(c) {
     const panels = {
       news: () => this._news(c.news),
-      funding: () => this._funding(c.funding),
+      funding: () => this._money(c),
       career: () => this._career(c),
       opinions: () => this._issues(c.opinions),
       sources: () => this._sources(c.sources, c.news),
@@ -236,7 +275,7 @@ export class CandidateSheet {
             onclick: () => this._setTab(t.id),
             onkeydown: (e) => this._onTabKey(e),
           },
-          h("span", { "aria-hidden": "true" }, t.icon),
+          h("span", { class: "cs-tab-ico", "aria-hidden": "true", html: icon(t.icon, { size: 18 }) }),
           " ",
           t.label
         )
@@ -271,7 +310,7 @@ export class CandidateSheet {
           onclick: () => this.close(),
           "aria-label": `Close ${c.name}'s profile`,
         },
-        h("span", { "aria-hidden": "true" }, "←"),
+        h("span", { "aria-hidden": "true", html: icon("back", { size: 16 }) }),
         " Back"
       ),
       this._header(c),
@@ -280,7 +319,9 @@ export class CandidateSheet {
       h(
         "footer",
         { class: "cs-foot" },
-        "Research profile from the Mapachusetts candidate database. News summaries are AI-generated from linked reporting. Always verify claims with the sources."
+        c.researched
+          ? "Research profile from the Mapachusetts candidate database. News summaries are AI-generated from linked reporting. Always verify claims with the sources."
+          : "Candidate list compiled from Wikipedia's 2026 election pages. Money totals are from FEC filings. Confirm details with your election office."
       )
     );
   }
@@ -322,7 +363,14 @@ export class CandidateSheet {
             })
         ),
         c.status?.termInfo && h("p", { class: "cs-term", text: c.status.termInfo }),
-        link(c.openSecretsUrl, "View on OpenSecrets ↗", "cs-extlink")
+        h(
+          "p",
+          { class: "cs-extlinks" },
+          safeUrl(c.wikipedia) && link(c.wikipedia, "Wikipedia ↗", "cs-extlink"),
+          safeUrl(c.openSecretsUrl) && link(c.openSecretsUrl, "OpenSecrets ↗", "cs-extlink")
+        ),
+        !c.researched &&
+          h("p", { class: "cs-light", text: "Basic profile: party and campaign money from official filings. No in-depth research has been added for this candidate yet." })
       )
     );
   }
@@ -336,7 +384,7 @@ export class CandidateSheet {
   }
 
   _why(text) {
-    return h("div", { class: "cs-box cs-why" }, h("span", { class: "cs-box-label", text: "🔍 Why people are searching this" }), h("p", { text }));
+    return h("div", { class: "cs-box cs-why" }, h("span", { class: "cs-box-label", text: "Why people are searching this" }), h("p", { text }));
   }
 
   // -- Tab: In the News ------------------------------------------------------------
@@ -380,52 +428,54 @@ export class CandidateSheet {
     ];
   }
 
-  // -- Tab: Funding ----------------------------------------------------------------
+  // -- Tab: Money (official FEC filings) --------------------------------------------
 
-  _bars(items, label) {
-    if (!items.length) return null;
-    const maxPct = Math.max(...items.map((s) => s.pct));
-    return h(
-      "ul",
-      { class: "cs-bars", "aria-label": label },
-      items.map((s) =>
-        h(
-          "li",
-          {},
-          h("div", { class: "cs-bar-label" }, h("span", { text: s.label }), h("span", { class: "cs-bar-amount", text: formatMoney(s.amount) })),
-          h(
-            "div",
-            { class: "cs-bar-track", role: "img", "aria-label": `${s.label}: ${s.pct}% of top contributions` },
-            h("div", { class: "cs-bar-fill", style: `width:${maxPct > 0 ? (s.pct / maxPct) * 100 : 0}%` })
-          )
-        )
-      )
-    );
-  }
-
-  _funding(f) {
+  _money(c) {
+    const f = c.finance;
     if (!f) {
       return this._empty(
-        "Campaign finance data hasn't been added for this candidate yet. Federal filings are on ",
+        "Federal campaign-finance totals aren't available for this person. Federal filings are on ",
         link("https://www.fec.gov/data/", "FEC.gov"),
-        " and ",
-        link("https://www.opensecrets.org", "OpenSecrets"),
-        "; Massachusetts state races are on ",
-        link("https://www.ocpf.us", "OCPF"),
         "."
       );
     }
     const stat = (label, value) =>
       h("div", { class: "cs-stat" }, h("span", { class: "cs-stat-label", text: label }), h("span", { class: "cs-stat-value", text: value }));
+    const through = f.coverageEnd ? formatDate(f.coverageEnd) : null;
+
+    const bars = f.breakdown.length
+      ? h(
+          "ul",
+          { class: "cs-bars", "aria-label": "Where the money came from" },
+          f.breakdown.map((b) =>
+            h(
+              "li",
+              {},
+              h("div", { class: "cs-bar-label" }, h("span", { text: b.label }), h("span", { class: "cs-bar-amount", text: `${formatMoney(b.amount)} · ${b.pct}%` })),
+              h(
+                "div",
+                { class: "cs-bar-track", role: "img", "aria-label": `${b.label}: ${b.pct}% of money raised` },
+                h("div", { class: "cs-bar-fill", style: `width:${Math.min(100, b.pct)}%` })
+              )
+            )
+          )
+        )
+      : null;
+
+    const selfFunded = f.breakdown.find((b) => b.key === "candidate");
+    const note =
+      selfFunded && selfFunded.pct >= 25
+        ? this._plain(`About ${Math.round(selfFunded.pct)}% of what this campaign raised is the candidate's own money or loans to the campaign.`)
+        : null;
+
     return [
-      h("div", { class: "cs-stats" }, stat("Total raised", f.total), stat("Top industry", f.topIndustry), stat("Small donors (<$200)", f.smallDonorPct)),
-      f.plainEnglish && this._plain(f.plainEnglish),
-      f.whyItMatters && this._why(f.whyItMatters),
-      h("h3", { class: "cs-sub", text: "Top funding sources by industry" }),
-      this._bars(f.sources, "Top funding sources breakdown"),
-      f.foreignSources.length > 0 && h("h3", { class: "cs-sub", text: "Foreign policy & tariff-related PAC contributions" }),
-      f.foreignSources.length > 0 && this._bars(f.foreignSources, "Foreign policy funding breakdown"),
-      h("p", { class: "cs-note" }, "Data sourced from ", link("https://www.opensecrets.org", "OpenSecrets.org"), ". Verify figures directly on their platform."),
+      h("p", { class: "cs-disclaimer", text: `Official totals from the Federal Election Commission${through ? `, filed through ${through}` : ""}. Campaign-finance reports are filed on a schedule, so recent days may not be included yet.` }),
+      h("div", { class: "cs-stats" }, stat("Raised", formatMoney(f.receipts)), stat("Spent", formatMoney(f.disbursements)), stat("Cash on hand", formatMoney(f.cashOnHand))),
+      f.debts > 0 && h("p", { class: "cs-note", text: `Debts and loans owed by the campaign: ${formatMoney(f.debts)}.` }),
+      note,
+      h("h3", { class: "cs-sub", text: "Where the money came from" }),
+      bars,
+      h("p", { class: "cs-note" }, link(f.fecUrl, "See every filing on FEC.gov ↗"), " · ", link(c.openSecretsUrl, "OpenSecrets ↗")),
     ];
   }
 
@@ -438,7 +488,7 @@ export class CandidateSheet {
       h(
         "div",
         { class: "cs-statuscard-top" },
-        h("span", { class: "cs-status-icon", "aria-hidden": "true", text: STATUS_ICONS[s.statusType] || "📋" }),
+        h("span", { class: "cs-status-icon", "aria-hidden": "true", html: icon(s.statusType === "incumbent" ? "incumbent" : s.statusType === "running" ? "running" : "former", { size: 26 }) }),
         h("div", {}, h("div", { class: "cs-status-title", text: `${s.currentTitle} — ${s.state}` }), h("div", { class: "cs-status-term", text: s.termInfo })),
         h("span", { class: "cs-status", "data-status-type": s.statusType, text: s.statusLabel })
       ),
@@ -450,11 +500,11 @@ export class CandidateSheet {
   }
 
   _career(c) {
-    if (!c.bio && !c.status && c.career.length === 0) {
+    if (!c.bio && !hasStatusCard(c.status) && c.career.length === 0) {
       return this._empty("Career history hasn't been added for this candidate yet.");
     }
     return [
-      c.status && this._statusCard(c.status),
+      hasStatusCard(c.status) && this._statusCard(c.status),
       c.bio && h("p", { class: "cs-bio", text: c.bio }),
       c.career.length > 0 && h("p", { class: "cs-intro", text: "Roles held in chronological order, most recent first." }),
       c.career.length > 0 &&
@@ -533,7 +583,7 @@ export class CandidateSheet {
           h(
             "div",
             { class: "cs-topic-head" },
-            h("span", { "aria-hidden": "true", text: topic.icon }),
+            h("span", { class: "cs-topic-ico", "aria-hidden": "true", html: icon(TOPIC_ICONS[topic.id] || "issues", { size: 20 }) }),
             h("h3", { text: topic.topic }),
             h("span", { class: "cs-topic-count", text: `${topic.subIssues.length} issue${topic.subIssues.length === 1 ? "" : "s"}` })
           ),
@@ -605,14 +655,14 @@ export class CandidateSheet {
           h(
             "div",
             { class: "cs-myth-claim" },
-            h("div", { class: "cs-myth-head" }, h("span", { "aria-hidden": "true", text: "✕" }), " Common claim"),
+            h("div", { class: "cs-myth-head" }, h("span", { "aria-hidden": "true", html: icon("cross", { size: 15 }) }), " Common claim"),
             h("p", { text: `“${m.myth}”` }),
             safeUrl(m.mythSourceUrl) && link(m.mythSourceUrl, `Where this claim comes from: ${m.mythSourceLabel || "source"} ↗`, "cs-myth-link")
           ),
           h(
             "div",
             { class: "cs-myth-reality" },
-            h("div", { class: "cs-myth-head" }, h("span", { "aria-hidden": "true", text: "✓" }), " What the record shows"),
+            h("div", { class: "cs-myth-head" }, h("span", { "aria-hidden": "true", html: icon("check", { size: 15 }) }), " What the record shows"),
             h("p", { text: m.reality }),
             link(m.sourceUrl, `Verify this: ${m.sourceLabel} ↗`, "cs-myth-link")
           )

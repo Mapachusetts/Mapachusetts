@@ -26,6 +26,7 @@ import { getCurrentPosition } from "./geolocation.js";
 import {
   fetchRacesForPlace,
   fetchEventsForPlace,
+  fetchOfficeholdersForPlace,
   fetchStack,
   fetchBoundary,
   fetchChildShapes,
@@ -35,7 +36,10 @@ import {
   resolvePlaceByCoords,
 } from "../data/civic.js";
 import { kindMeta } from "../data/kinds.js";
-import { getCandidate, racesForState } from "../data/candidates.js";
+import { totals } from "../data/candidates.js";
+import { findNodeById } from "../data/places.js";
+import { TRENDING, TRENDING_META } from "../data/trending.generated.js";
+import { icon } from "./icons.js";
 
 const $ = (id) => document.getElementById(id);
 const THEME_KEY = "mapachusetts-theme";
@@ -275,13 +279,19 @@ nav.subscribe(async (state) => {
     return;
   }
 
-  // 1. Events + the sample-data part of the ballot show up straight away.
+  // 1. Events and the first part of the ballot show up straight away.
   fetchEventsForPlace(current.id).then((events) => {
     if (!stale()) ui.renderEvents(events, current);
   });
   fetchRacesForPlace(current.id, []).then((races) => {
     if (!stale()) {
-      ui.renderBallot(races, { node: current, stack: [], status: "loading", openKind: levelKind(current.level) });
+      ui.renderBallot(races, {
+        node: current,
+        stack: [],
+        stateCode: path.find((n) => n.level === "state")?.code ?? null,
+        status: "loading",
+        openKind: levelKind(current.level),
+      });
     }
   });
 
@@ -295,11 +305,21 @@ nav.subscribe(async (state) => {
     dock.stack = res.stack;
     ui.renderDock(dock);
 
-    const races = await fetchRacesForPlace(current.id, res.stack);
+    // Now that we know which city / county covers this spot, add its meetings.
+    fetchEventsForPlace(current.id, res.stack).then((events) => {
+      if (!stale()) ui.renderEvents(events, current);
+    });
+
+    const [races, holders] = await Promise.all([
+      fetchRacesForPlace(current.id, res.stack),
+      fetchOfficeholdersForPlace(current.id, res.stack),
+    ]);
     if (stale()) return;
     ui.renderBallot(races, {
       node: current,
       stack: res.stack,
+      holders,
+      stateCode: path.find((n) => n.level === "state")?.code ?? null,
       status: "ready",
       openKind: levelKind(current.level, res.unincorporated),
       unincorporated: res.unincorporated,
@@ -389,8 +409,9 @@ async function drawOutlines(stack, primary, current, seq) {
 async function goToDescriptor(desc) {
   ui.setStatus("Finding the layers of government…", "info");
   const level = desc.type === "state" ? "state" : desc.type === "county" ? "county" : "city";
-  // A street-level result is an exact spot; a whole city / county / state is not.
-  const exact = !["city", "county", "state"].includes(desc.type);
+  // Only a house or street address is an exact spot. A ZIP code, city, county or
+  // state is an area, and districts can split it, so we say so in the note.
+  const exact = desc.type === "house" || desc.type === "street";
 
   try {
     const res = await resolveFromPoint(desc.lng, desc.lat, level);
@@ -495,6 +516,12 @@ document.addEventListener("click", (e) => {
   const action = e.target.closest("[data-action]")?.dataset.action;
   if (action === "locate") locateMe();
   if (action === "search") search.focus();
+  if (action === "privacy") {
+    e.preventDefault();
+    const note = $("privacyNote");
+    note.hidden = !note.hidden;
+    e.target.closest("[data-action]").setAttribute("aria-expanded", String(!note.hidden));
+  }
 });
 
 document.addEventListener("keydown", (e) => {
@@ -507,25 +534,59 @@ document.addEventListener("keydown", (e) => {
 
 // ----- Candidates ------------------------------------------------------------------------
 
-// "Meet the candidates" chips in the intro: everyone in a researched race.
-(function fillHeroCandidates() {
-  const box = $("heroCandidates");
-  const seen = new Set();
-  for (const race of racesForState("MA")) {
-    for (const cand of race.candidates) {
-      if (seen.has(cand.slug) || !getCandidate(cand.slug)) continue;
-      seen.add(cand.slug);
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip-btn";
-      btn.dataset.candidate = cand.slug;
-      btn.textContent = cand.name;
-      btn.title = `${race.office}: open ${cand.name}'s profile`;
-      box.appendChild(btn);
-    }
+// Icons in the static HTML: <span class="ico-slot" data-icon="globe" data-icon-size="18">.
+function hydrateIcons(root = document) {
+  for (const el of root.querySelectorAll("[data-icon]")) {
+    const size = Number(el.dataset.iconSize) || 18;
+    el.innerHTML = icon(el.dataset.icon, { size });
+    if (el.dataset.rotate) el.firstElementChild.style.transform = `rotate(${el.dataset.rotate}deg)`;
   }
-  box.hidden = seen.size === 0;
-  box.previousElementSibling.hidden = seen.size === 0; // its heading
+}
+hydrateIcons();
+
+// "Races people are looking at": a geographically diverse set of races, picked
+// by scripts/export_trending.py from Wikipedia page views. The list is only
+// shown while it is recent, so a stale snapshot never looks like "right now".
+(function fillTrending() {
+  const wrap = $("heroTrendingWrap");
+  const box = $("heroTrending");
+  const ageDays = (Date.now() - Date.parse(TRENDING_META.generatedAt)) / 86400000;
+  const items = TRENDING.filter((t) => findNodeById(`us-${t.state.toLowerCase()}`));
+  if (!items.length) {
+    wrap.hidden = true;
+    return;
+  }
+  const stale = ageDays > 14;
+  if (stale) $("trendingTitle").textContent = "Races to explore";
+  for (const t of items) {
+    const place = findNodeById(`us-${t.state.toLowerCase()}`);
+    const office = t.office === "governor" ? "Governor" : "U.S. Senate";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "chip-btn chip-trend";
+    btn.dataset.jump = place.id;
+    btn.setAttribute("role", "listitem");
+    btn.title = `Open ${place.name}: ${office} race`;
+    const label = document.createElement("span");
+    label.textContent = `${place.name} · ${office}`;
+    btn.appendChild(label);
+    if (!stale && t.surge >= 2) {
+      const tag = document.createElement("span");
+      tag.className = "trend-tag";
+      tag.innerHTML = icon("trend", { size: 12 }) + "Rising";
+      btn.appendChild(tag);
+    }
+    box.appendChild(btn);
+  }
+  $("trendingNote").textContent = stale
+    ? "States are chosen from across the country."
+    : `Based on Wikipedia page views of each race's article over the 3 days ending ${TRENDING_META.windowEnd}. One race per region first, so the list is not all one corner of the country. This shows attention, not importance.`;
+})();
+
+// Headline numbers come from the data, never typed by hand.
+(function fillFacts() {
+  const t = totals();
+  $("factNominees").textContent = `${t.candidates.toLocaleString("en-US")} candidates`;
 })();
 
 // Deep link: /?candidate=maura-healey

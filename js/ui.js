@@ -8,14 +8,15 @@ import { CATEGORY_META, MIDTERM_2026, PRESIDENTIAL_2028 } from "../data/races.js
 import { EVENT_TYPES } from "../data/events.js";
 import { KIND_ORDER, kindMeta } from "../data/kinds.js";
 import { levelByKey } from "../data/levels.js";
+import { icon } from "./icons.js";
+import { getCandidate, initials } from "../data/candidates.js";
+import { OFFICEHOLDER_INFO, hasLocalOfficeholders, profileSlugFor } from "../data/officeholders.js";
 
 const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" });
 const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
 const monthFmt = new Intl.DateTimeFormat(undefined, { month: "short" });
 
-const ICON_MOON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" fill="currentColor"/></svg>`;
-const ICON_SUN = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
 export class UI {
   /**
@@ -57,7 +58,7 @@ export class UI {
     const night = theme === "night";
     this.refs.body.dataset.theme = theme;
     // The button shows where you'd go: a sun on the night map, a moon on the day map.
-    this.refs.themeBtn.innerHTML = night ? ICON_SUN : ICON_MOON;
+    this.refs.themeBtn.innerHTML = icon(night ? "sun" : "moon", { size: 20 });
     const label = night ? "Switch to the day map" : "Switch to the night map";
     this.refs.themeBtn.setAttribute("aria-label", label);
     this.refs.themeBtn.title = label;
@@ -258,7 +259,7 @@ export class UI {
       const ico = document.createElement("span");
       ico.className = "chip-ico";
       ico.setAttribute("aria-hidden", "true");
-      ico.textContent = meta.icon;
+      ico.innerHTML = icon(meta.icon, { size: 20 });
 
       const text = document.createElement("span");
       text.className = "chip-text";
@@ -303,10 +304,15 @@ export class UI {
           `<strong>${escapeHtml(ctx.unincorporatedName || ctx.node.name)} isn't a city or town.</strong> It's an unincorporated area, so the county government handles local services.`
         )
       );
-    } else if (!ctx.node.races.length && !ctx.node.events.length && ctx.node.level !== "country") {
+    }
+
+    // Honest coverage note: federal and statewide candidates are listed for the
+    // whole country; local ones are not (no free national source).
+    if (ctx.node.level !== "country" && ctx.node.level !== "globe") {
+      const link = '<a href="https://ballotpedia.org/Sample_Ballot_Lookup" target="_blank" rel="noopener noreferrer">sample ballot lookup</a>';
       list.appendChild(
         noteBox(
-          `<strong>We don't have local details for ${escapeHtml(ctx.node.name)} yet.</strong> The layers below are real; ballot items appear as data is added.`
+          `<strong>Federal and governor races are listed for every state.</strong> We don't have candidate lists yet for state legislature, county, city or school board races. Use a ${link} or your local election office to see your full ballot. ${holdersCoverage(ctx.stateCode)}`
         )
       );
     }
@@ -326,6 +332,7 @@ export class UI {
       const meta = kindMeta(kind);
       const members = ctx.stack.filter((j) => j.kind === kind);
       const items = races.filter((r) => r.kind === kind);
+      const held = (ctx.holders || []).filter((h) => h.kind === kind);
 
       const sec = document.createElement("details");
       sec.className = "layer";
@@ -340,7 +347,7 @@ export class UI {
       const ico = document.createElement("span");
       ico.className = "layer-ico";
       ico.setAttribute("aria-hidden", "true");
-      ico.textContent = meta.icon;
+      ico.innerHTML = icon(meta.icon, { size: 22 });
       const title = document.createElement("span");
       title.className = "layer-title";
       const k = document.createElement("span");
@@ -363,13 +370,14 @@ export class UI {
       blurb.className = "layer-blurb";
       blurb.textContent = meta.blurb;
       body.appendChild(blurb);
-
+      if (held.length) body.appendChild(this._holders(held));
       if (items.length) {
+        if (held.length) body.appendChild(subheading("On the ballot"));
         for (const race of items) body.appendChild(this._raceCard(race));
       } else {
         const none = document.createElement("p");
         none.className = "layer-empty";
-        none.textContent = "No ballot items listed for this layer yet.";
+        none.textContent = emptyLayerText(kind);
         body.appendChild(none);
       }
       const src = members.find((j) => j.source && j.source !== "built in");
@@ -409,6 +417,99 @@ export class UI {
     sec.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
   }
 
+  // "In office now": who holds each office in this layer, on the ballot or not.
+  _holders(holders) {
+    const wrap = document.createElement("section");
+    wrap.className = "holders";
+    wrap.appendChild(subheading("In office now"));
+    const list = document.createElement("ul");
+    list.className = "holder-list";
+    for (const h of holders) list.appendChild(this._holderRow(h));
+    wrap.appendChild(list);
+    const credit = document.createElement("p");
+    credit.className = "layer-credit";
+    credit.textContent = `As of ${dateFmt.format(parseLocalDate(OFFICEHOLDER_INFO.asOf))}. Offices change hands after elections, resignations and appointments, so check the official page.`;
+    wrap.appendChild(credit);
+    return wrap;
+  }
+  _holderRow(h) {
+    const li = document.createElement("li");
+    li.className = "holder";
+    li.dataset.party = String(h.party || "").trim().toLowerCase();
+
+    const avatar = document.createElement("span");
+    avatar.className = "holder-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    const setInitials = () => {
+      avatar.replaceChildren(document.createTextNode(initials(h.name)));
+    };
+    if (h.photo && /^https?:\/\//i.test(h.photo)) {
+      const img = document.createElement("img");
+      img.src = h.photo;
+      img.alt = "";
+      img.loading = "lazy";
+      img.referrerPolicy = "no-referrer";
+      img.addEventListener("error", setInitials);
+      avatar.appendChild(img);
+    } else {
+      setInitials();
+    }
+
+    const main = document.createElement("div");
+    main.className = "holder-main";
+    const office = document.createElement("div");
+    office.className = "holder-office";
+    office.textContent = h.office;
+    main.appendChild(office);
+
+    const slug = profileSlugFor(h);
+    let nameEl;
+    if (slug) {
+      nameEl = document.createElement("button");
+      nameEl.type = "button";
+      nameEl.className = "cand-btn holder-name";
+      nameEl.title = `Open ${h.name}'s profile`;
+      nameEl.addEventListener("click", () => this.handlers.onOpenCandidate?.(slug));
+    } else {
+      nameEl = document.createElement("div");
+      nameEl.className = "holder-name";
+    }
+    nameEl.textContent = h.name;
+    main.appendChild(nameEl);
+
+    const meta = [h.party, termText(h)].filter(Boolean).join("  ·  ");
+    if (meta) {
+      const p = document.createElement("div");
+      p.className = "holder-meta";
+      p.textContent = meta;
+      main.appendChild(p);
+    }
+
+    const tags = document.createElement("div");
+    tags.className = "tag-row";
+    const when = electionTag(h);
+    if (when) tags.appendChild(tag(when.text, when.cls, null, when.icon));
+    if (h.appointed) tags.appendChild(tag("Appointed", "tag-soft", null, "check"));
+    if (tags.children.length) main.appendChild(tags);
+
+    if (h.note) {
+      const n = document.createElement("div");
+      n.className = "holder-note";
+      n.textContent = h.note;
+      main.appendChild(n);
+    }
+    if (h.url && /^https?:\/\//i.test(h.url)) {
+      const a = document.createElement("a");
+      a.className = "holder-link";
+      a.href = h.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = "Official page ↗";
+      main.appendChild(a);
+    }
+    li.append(avatar, main);
+    return li;
+  }
   _raceCard(race) {
     const card = document.createElement("article");
     card.className = "card race-card";
@@ -416,9 +517,11 @@ export class UI {
     const tags = document.createElement("div");
     tags.className = "tag-row";
     const cat = CATEGORY_META[race.category];
-    if (cat) tags.appendChild(tag(`${cat.icon} ${cat.label}`, "tag-type"));
+    if (cat) tags.appendChild(tag(cat.label, "tag-type", null, cat.icon));
     if (race.source === "sample") tags.appendChild(tag("Sample", "tag-sample"));
-    else if (race.candidates?.some((c) => c.slug)) tags.appendChild(tag("✓ Researched", "tag-real"));
+    if (race.candidates?.some((c) => c.slug && getCandidate(c.slug)?.researched)) {
+      tags.appendChild(tag("Research profiles", "tag-real", null, "check"));
+    }
     if (tags.children.length) card.appendChild(tags);
 
     const office = document.createElement("h4");
@@ -445,13 +548,21 @@ export class UI {
       card.appendChild(desc);
     }
 
+    if (race.pending) {
+      const wait = document.createElement("p");
+      wait.className = "card-desc card-pending";
+      wait.textContent =
+        "The candidate list for this race isn't available yet. Check your state or local election office.";
+      card.appendChild(wait);
+    }
+
     if (race.candidates && race.candidates.length) {
       const cands = document.createElement("ul");
       cands.className = "chips";
       cands.setAttribute("aria-label", "Candidates or choices");
       for (const c of race.candidates) {
         const li = document.createElement("li");
-        const label = c.party ? `${c.name} (${c.party})` : c.name;
+        const label = `${c.name}${c.party ? ` (${c.party})` : ""}${c.incumbent ? ", incumbent" : ""}`;
         if (c.slug) {
           // A researched candidate: opens their full profile.
           const btn = document.createElement("button");
@@ -492,7 +603,7 @@ export class UI {
   }
 
   _eventCard(evt) {
-    const meta = EVENT_TYPES[evt.type] || { label: "Event", icon: "📌", color: "#475569" };
+    const meta = EVENT_TYPES[evt.type] || { label: "Event", icon: "pin", color: "#475569" };
     const layer = evt.kind ? kindMeta(evt.kind) : null;
     const start = new Date(evt.start);
 
@@ -510,9 +621,9 @@ export class UI {
 
     const chips = document.createElement("div");
     chips.className = "tag-row";
-    chips.appendChild(tag(`${meta.icon} ${meta.label}`, "tag-type"));
-    if (layer) chips.appendChild(tag(`${layer.icon} ${layer.tag}`, "tag-layer", layer.ink));
-    if (evt.virtual) chips.appendChild(tag("💻 Online option", "tag-soft"));
+    chips.appendChild(tag(meta.label, "tag-type", null, meta.icon));
+    if (layer) chips.appendChild(tag(layer.tag, "tag-layer", layer.ink, layer.icon));
+    if (evt.virtual) chips.appendChild(tag("Online option", "tag-soft", null, "online"));
     if (evt.source === "sample") chips.appendChild(tag("Sample", "tag-sample"));
     body.appendChild(chips);
 
@@ -524,15 +635,18 @@ export class UI {
     const when = document.createElement("p");
     when.className = "event-when";
     const rel = relativeDay(start);
-    when.textContent = `${rel ? rel + " · " : ""}${dayFmt.format(start)}, ${timeFmt.format(start)}${
-      evt.end ? " – " + timeFmt.format(new Date(evt.end)) : ""
+    when.textContent = `${rel ? rel + " · " : ""}${dayFmt.format(start)}${
+      evt.allDay
+        ? ", all day"
+        : ", " + timeFmt.format(start) + (evt.end ? " – " + timeFmt.format(new Date(evt.end)) : "")
     }`;
     body.appendChild(when);
 
     if (evt.venue) {
       const where = document.createElement("p");
-      where.className = "card-meta";
-      where.textContent = `📍 ${evt.venue}`;
+      where.className = "card-meta card-where";
+      where.insertAdjacentHTML("afterbegin", icon("pin", { size: 14 }));
+      where.append(document.createTextNode(` ${evt.venue}`));
       body.appendChild(where);
     }
     if (evt.description) {
@@ -583,6 +697,24 @@ export class UI {
 
 // ----- Helpers ---------------------------------------------------------------
 
+// What to say when we have no races for a layer. Be honest about WHY.
+function emptyLayerText(kind) {
+  switch (kind) {
+    case "senate":
+    case "house":
+      return "We don't have a list of state legislature candidates yet. Your state or local election office has the full ballot.";
+    case "county":
+    case "city":
+    case "school":
+    case "ward":
+      return "We don't have a list of local candidates for this layer yet. A sample ballot from your election office will show them.";
+    case "precinct":
+      return "Your precinct decides where you vote. Confirm your polling place with your local election office.";
+    default:
+      return "No races for this layer are on the ballot we have data for.";
+  }
+}
+
 function noteBox(html) {
   const box = document.createElement("div");
   box.className = "note";
@@ -597,10 +729,60 @@ function emptyBox(html) {
   return div;
 }
 
-function tag(text, cls, color) {
+function subheading(text) {
+  const h = document.createElement("h4");
+  h.className = "layer-sub";
+  h.textContent = text;
+  return h;
+}
+const monthYear = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
+const fullDate = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
+const ELECTION_DAY_2026 = "2026-11-03";
+
+// "Term ends January 2027", "Appointed Mar 24, 2026", or special wording for
+// an appointee who serves until a special election is decided.
+function termText(h) {
+  if (h.termEnd === ELECTION_DAY_2026) return "Serves until the winner of the Nov. 3 election is sworn in";
+  const bits = [];
+  if (h.appointed && h.termStart) bits.push(`Appointed ${fullDate.format(parseLocalDate(h.termStart))}`);
+  else if (h.termStart) bits.push(`Since ${monthYear.format(parseLocalDate(h.termStart))}`);
+  if (h.termEnd) bits.push(`term ends ${monthYear.format(parseLocalDate(h.termEnd))}`);
+  const text = bits.join(", ");
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+}
+
+// Is this seat on the 2026 ballot, or when is its next election?
+function electionTag(h) {
+  const iso = h.nextElection;
+  if (!iso) return null;
+  if (/^\d{4}$/.test(iso)) return { text: `Next election: ${iso}`, cls: "tag-soft", icon: "events" };
+  const day = parseLocalDate(iso);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (h.onBallot2026 && day >= today) {
+    return { text: `On the ballot ${fullDate.format(day)}`, cls: "tag-type", icon: "ballot" };
+  }
+  if (day < today) {
+    // The data predates this election: say so instead of showing stale "next" dates.
+    return { text: `Election held ${fullDate.format(day)}; list not yet updated`, cls: "tag-soft", icon: "events" };
+  }
+  return { text: `Next election: ${fullDate.format(day)}`, cls: "tag-soft", icon: "events" };
+}
+
+// One sentence on what "in office now" covers where you are.
+function holdersCoverage(stateCode) {
+  const base = "Who holds office is listed for the President, Vice President, U.S. senators and governors in every state";
+  return hasLocalOfficeholders(stateCode)
+    ? `${base}, and for state, county and city offices in this state.`
+    : `${base}. State, county and city officeholders are listed for Massachusetts only so far.`;
+}
+
+// A small pill. `iconKey` (optional) is a key into js/icons.js.
+function tag(text, cls, color, iconKey) {
   const span = document.createElement("span");
   span.className = `tag ${cls}`;
-  span.textContent = text;
+  if (iconKey) span.insertAdjacentHTML("afterbegin", icon(iconKey, { size: 13 }));
+  span.append(document.createTextNode(text));
   if (color) span.style.setProperty("--tag-ink", color);
   return span;
 }

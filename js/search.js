@@ -8,6 +8,7 @@
 
 import { searchPlaces } from "./geocode.js";
 import { searchCandidates } from "../data/candidates.js";
+import { icon } from "./icons.js";
 
 const DEBOUNCE_MS = 300;
 
@@ -197,6 +198,13 @@ export class SearchBox {
       const title = document.createElement("span");
       title.className = "search-option-title";
       title.textContent = r.name;
+      if (r.kind === "candidate") {
+        const ico = document.createElement("span");
+        ico.className = "search-option-ico";
+        ico.setAttribute("aria-hidden", "true");
+        ico.innerHTML = icon("community", { size: 16 }); // trusted markup from js/icons.js
+        title.prepend(ico);
+      }
 
       const sub = document.createElement("span");
       sub.className = "search-option-sub";
@@ -262,13 +270,17 @@ function emptyItem(text) {
 function subtitle(r) {
   const parts = [];
   const add = (v) => v && !parts.includes(v) && parts.push(v);
-  const kind = {
-    city: "City / town",
-    county: "County",
-    state: "State",
-    district: "District",
-    locality: "Place",
-  }[r.type];
+  const kind = r.isZip
+    ? "ZIP code"
+    : {
+        city: "City / town",
+        county: "County",
+        state: "State",
+        district: "District",
+        locality: "Place",
+        house: "Address",
+        street: "Street",
+      }[r.type];
   const county =
     r.county && r.countryCode === "US" && !/county|parish|borough/i.test(r.county)
       ? `${r.county} County`

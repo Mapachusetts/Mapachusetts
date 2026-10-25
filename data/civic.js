@@ -7,17 +7,25 @@
 //     loadChildren                   every county in a state / city in a county
 //     fetchChildShapes               clickable state / county polygons
 //
-//   POLITICS
-//     fetchRacesForPlace             what's on the ballot. REAL for the races in
-//                                    data/candidates.js (Massachusetts 2026 so far);
-//                                    SAMPLE placeholders for everything else.
-//     fetchEventsForPlace            town halls, meetings, voting dates
+//   POLITICS (real data; nothing is invented)
+//     fetchRacesForPlace             what's on the ballot: every U.S. Senate,
+//                                    Governor and U.S. House nominee, from
+//                                    data/candidates.js
+//     fetchOfficeholdersForPlace     who holds each office now, on the ballot or
+//                                    not (data/officeholders.js)
+//     fetchEventsForPlace            Election Day, plus real city council and
+//                                    committee meetings (data/events.generated.js)
+//     MISSING: state legislature, county, city and school-board candidates have
+//     no free national source. See "Adding more" below.
 //
-// To plug in a real dataset (e.g. your Supabase tables), replace the bodies of
-// fetchRacesForPlace / fetchEventsForPlace. Each race needs a `kind` (which
-// layer of government decides it, see data/kinds.js) and the UI does the rest.
-// Races for districts can be keyed on the jurisdiction ids in `stack`
-// (e.g. "congress:4822", "school:4819650", "senate:48017").
+// ADDING MORE
+//   Each race needs a `kind` (which layer of government decides it, see
+//   data/kinds.js) and the UI does the rest. Races for districts can be keyed on
+//   the jurisdiction ids in `stack` (e.g. "congress:4822", "school:4819650",
+//   "senate:48017"). Sources that cover state legislative / local candidates:
+//     Ballotpedia API, BallotReady API (paid), Google Civic voterInfoQuery
+//     (needs a key; only during supported elections), or your own research
+//     database. Add them inside fetchRacesForPlace below.
 //
 // Every function is async so swapping in fetch() is a drop-in change.
 
@@ -38,12 +46,10 @@ import {
   childShapes,
 } from "./census.js";
 import { kindsForLevel } from "./kinds.js";
-import { racesForState } from "./candidates.js";
-import {
-  makeHouseRace,
-  makeStateLegislatorRace,
-  makeSchoolBoardRace,
-} from "./races.js";
+import { racesForPlace } from "./candidates.js";
+import { officeholdersForPlace } from "./officeholders.js";
+import { EVENTS, EVENTS_META } from "./events.generated.js";
+import { electionDayEvent } from "./events.js";
 
 // ===== Geography ============================================================
 
@@ -134,56 +140,79 @@ export async function fetchPathForPlace(placeId) {
   return pathToNode(placeId);
 }
 
-// ===== Politics (sample data today) ========================================
+// ===== Politics (real data) ==================================================
 
 /**
- * Everything on the ballot for a place: races attached to the place (and its
- * ancestors) plus, for every district in `stack`, the office that district
- * elects. Each race has a `kind` (layer of government) and a `source`.
+ * Everything on the ballot for a place that we have real data for.
+ *
+ * - Statewide: U.S. Senate and Governor (when the state has one in 2026).
+ * - U.S. House: ONE race, for the person's own district, taken from the Census
+ *   stack. On a state's own page every district is listed instead.
  *
  * @param {string} placeId
  * @param {object[]} [stack]  from fetchStack (empty is fine)
  */
 export async function fetchRacesForPlace(placeId, stack = []) {
-  const curated = racesForNode(placeId);
+  const path = pathToNode(placeId);
+  const stateNode = path.find((n) => n.level === "state");
+  if (!stateNode) return [];
 
-  // Real candidates (data/candidates.js) for the place's state, when we have them.
-  const stateNode = pathToNode(placeId).find((n) => n.level === "state");
-  const real = stateNode
-    ? racesForState(stateNode.code).map((r) => ({
-        ...r,
-        scopeName: stateNode.name,
-        scopeLevel: "state",
-      }))
-    : [];
-  const state = stack.find((j) => j.kind === "state");
-  const generated = [];
-  for (const j of stack) {
-    let race = null;
-    if (j.kind === "congress") race = makeHouseRace(j.short);
-    else if (j.kind === "senate") race = makeStateLegislatorRace("senate", j.name, state?.name || "the state");
-    else if (j.kind === "house") race = makeStateLegislatorRace("house", j.name, state?.name || "the state");
-    else if (j.kind === "school") {
-      race = makeSchoolBoardRace(`${j.name} board`, `the public schools in ${j.name}`);
-    }
-    if (race) {
-      generated.push({
-        ...race,
-        id: `gen-${j.id}`,
-        jurisdictionId: j.id,
-        scopeName: j.name,
-        scopeLevel: j.kind,
-      });
-    }
-  }
-  return [...real, ...curated, ...generated].map((r) => ({ source: "sample", ...r }));
+  const atState = path[path.length - 1].level === "state";
+  const congress = stack.find((j) => j.kind === "congress");
+  const races = racesForPlace(stateNode.code, {
+    congress: congress ? congress.short : null,
+    allHouse: atState,
+  });
+
+  // Hand-attached races on a place node (none ship today; see places.js).
+  return [...races, ...racesForNode(placeId).map((r) => ({ source: "curated", ...r }))];
 }
 
 /**
- * Upcoming civic events for a place (own + inherited), soonest first.
- * Each: { id, title, kind?, type, start, end?, venue, virtual, description,
- * url?, source, scopeName }.
+ * Who holds office right now in the layers of government at a place, whether or
+ * not the seat is on the ballot (see data/officeholders.js for what is covered).
+ *
+ * @param {string} placeId
+ * @param {object[]} stack  from fetchStack; holders are matched to its layers
  */
-export async function fetchEventsForPlace(placeId) {
-  return eventsForNode(placeId);
+export async function fetchOfficeholdersForPlace(placeId, stack = []) {
+  const state = pathToNode(placeId).find((n) => n.level === "state");
+  return officeholdersForPlace({ stateCode: state ? state.code : null, stack });
+}
+
+/** Upcoming events: Election Day for everyone, plus real local meetings. */
+export async function fetchEventsForPlace(placeId, stack = []) {
+  const now = new Date();
+  const cityIds = new Set(stack.filter((j) => j.kind === "city").map((j) => j.geoid));
+  // A city node's own Census id also counts (stacks aren't loaded yet on first paint).
+  const node = pathToNode(placeId).slice(-1)[0];
+  if (node && node.geoid) cityIds.add(node.geoid);
+
+  const local = EVENTS.filter(
+    (e) => cityIds.has(e.geoid) && !e.cancelled && new Date(e.start) >= startOfToday(now)
+  ).map((e) => ({
+    ...e,
+    virtual: false,
+    description: e.agendaUrl ? "Agenda posted." : "",
+    scopeName: e.city,
+  }));
+
+  const electionDay = electionDayEvent("2026-11-03");
+  const all = new Date(electionDay.start) >= startOfToday(now) ? [electionDay] : [];
+
+  return [...all, ...local, ...eventsForNode(placeId)].sort(
+    (a, b) => new Date(a.start) - new Date(b.start)
+  );
+}
+
+const startOfToday = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/** Which cities have a live meeting calendar (for the "coverage" note in the UI). */
+export function meetingCoverage() {
+  return EVENTS_META.cities.map((c) => ({ city: c.city, state: c.state, geoid: c.geoid }));
+}
+
+/** When the meeting calendar was last refreshed (ISO string). */
+export function eventsGeneratedAt() {
+  return EVENTS_META.generatedAt;
 }
