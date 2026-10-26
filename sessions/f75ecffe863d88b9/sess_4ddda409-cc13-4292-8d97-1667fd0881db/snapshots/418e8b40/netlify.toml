@@ -1,0 +1,14 @@
+# Netlify config: deploy the static globe (index.html + styles.css + js/ + data/).
+#
+# This repo also holds a Next.js app (app/, lib/, package.json). Without this
+# file, Netlify detects Next.js, runs `next build`, and serves that app at /
+# instead of index.html. The Next.js app is meant for Vercel (see README).
+
+[build]
+  # Publish only the globe's files, so nothing else in the repo goes public.
+  command = "mkdir -p dist && cp -r index.html styles.css js data dist/"
+  publish = "dist"
+
+[build.environment]
+  # Stop Netlify's auto-installed Next.js runtime from taking over the build.
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"

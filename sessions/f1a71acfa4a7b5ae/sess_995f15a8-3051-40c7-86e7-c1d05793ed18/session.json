@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_995f15a8-3051-40c7-86e7-c1d05793ed18",
+  "title": "Multiple IDE Sessions Same Repository",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\AnotherHack"
+  ],
+  "rootPaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\AnotherHack"
+  ],
+  "createdAt": "2026-10-24T20:15:37.036Z",
+  "lastModifiedAt": "2026-10-24T20:18:50.257Z",
+  "modelId": "auto",
+  "autopilot": false,
+  "workflowLaunch": "when-asked",
+  "contextSnapshotModelDisplay": {
+    "modelId": "auto",
+    "display": "Auto (model selected dynamically on the server)"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "status": "in_progress",
+  "_meta": {
+    "kiro": {
+      "policyPreset": [
+        "edit-workspace"
+      ],
+      "shellType": "pwsh",
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        }
+      }
+    }
+  }
+}

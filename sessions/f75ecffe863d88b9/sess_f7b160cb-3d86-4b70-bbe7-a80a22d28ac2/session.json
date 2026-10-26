@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0.0",
+  "dataModelVersion": 1,
+  "id": "sess_f7b160cb-3d86-4b70-bbe7-a80a22d28ac2",
+  "title": "Session recap, site summary pending",
+  "agentMode": "vibe",
+  "workspacePaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "rootPaths": [
+    "c:\\Users\\jarba\\OneDrive\\Desktop\\Hackachusetts\\Mapachusetts"
+  ],
+  "createdAt": "2026-10-24T23:11:43.068Z",
+  "lastModifiedAt": "2026-10-24T23:32:10.731Z",
+  "modelId": "claude-opus-5.5",
+  "autopilot": true,
+  "workflowLaunch": "when-asked",
+  "effortLevel": "max",
+  "contextSnapshotModelDisplay": {
+    "modelId": "claude-opus-5.5",
+    "display": "Claude Opus 5.5"
+  },
+  "semanticReviewEnabled": true,
+  "disableAutoCompaction": false,
+  "ftaEnabled": false,
+  "workflowsEnabled": false,
+  "specPlanEnabled": false,
+  "specWorkflow": "quick",
+  "specSkipClarificationEnabled": true,
+  "memoryConfig": {
+    "mode": "disabled",
+    "reflection": false
+  },
+  "memoryConfigSource": "explicit",
+  "description": "I recapped this session: a read-only look at the Mapachusetts site and stack. The full site summary was interrupted and isn't written yet.",
+  "status": "idle",
+  "_meta": {
+    "kiro": {
+      "policyPreset": [
+        "edit-workspace"
+      ],
+      "shellType": "pwsh",
+      "settings": {
+        "workflows": {
+          "enabled": false
+        },
+        "goal": {
+          "enabled": false
+        },
+        "memory": {
+          "mode": "disabled",
+          "reflection": false
+        }
+      }
+    }
+  }
+}
