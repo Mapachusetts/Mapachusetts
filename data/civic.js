@@ -48,6 +48,8 @@ import {
 import { kindsForLevel } from "./kinds.js";
 import { racesForPlace } from "./candidates.js";
 import { officeholdersForPlace } from "./officeholders.js";
+import { massachusettsRacesFor, massachusettsQuestionsFor, sortStateRaces } from "./ma-ballot.js";
+import { isPilot } from "../js/config.js";
 import { EVENTS, EVENTS_META } from "./events.generated.js";
 import { electionDayEvent } from "./events.js";
 
@@ -164,8 +166,26 @@ export async function fetchRacesForPlace(placeId, stack = []) {
     allHouse: atState,
   });
 
+  // Pilot state: every other race on the ballot (statewide offices below
+  // governor, Governor's Council, legislature, county offices).
+  if (isPilot(stateNode.code) && stateNode.code === "MA") {
+    const pilot = massachusettsRacesFor(stack, { atState });
+    // Statewide offices go after Senate and Governor, in ballot order.
+    const state = sortStateRaces(pilot.filter((r) => r.kind === "state"));
+    races.push(...state, ...pilot.filter((r) => r.kind !== "state"));
+  }
   // Hand-attached races on a place node (none ship today; see places.js).
   return [...races, ...racesForNode(placeId).map((r) => ({ source: "curated", ...r }))];
+}
+
+/**
+ * Ballot questions for a place (pilot state only): the statewide questions plus
+ * any that appear only in the voter's own district.
+ */
+export async function fetchQuestionsForPlace(placeId, stack = []) {
+  const state = pathToNode(placeId).find((n) => n.level === "state");
+  if (!state || state.code !== "MA" || !isPilot(state.code)) return [];
+  return massachusettsQuestionsFor(stack);
 }
 
 /**

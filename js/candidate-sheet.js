@@ -13,6 +13,7 @@ import { icon } from "./icons.js";
 
 // `icon` is a key into js/icons.js.
 const ALL_TABS = [
+  { id: "race", label: "On the ballot", icon: "ballot" },
   { id: "news", label: "In the News", icon: "news" },
   { id: "funding", label: "Money", icon: "funding" },
   { id: "career", label: "Background", icon: "career" },
@@ -127,6 +128,7 @@ const timeOf = (value) => (value ? Date.parse(value) : Number.NaN);
 
 /** Open on the freshest tab that has data. */
 function defaultTab(c) {
+  if (c.race && !c.news && !c.finance) return "race";
   if (c.news) return "news";
   if (c.finance) return "funding";
   return "career";
@@ -139,6 +141,7 @@ const hasStatusCard = (st) => !!(st && (st.plainEnglish || st.currentTitle));
 function tabsFor(c) {
   return ALL_TABS.filter((t) => {
     switch (t.id) {
+      case "race": return !!c.race;
       case "news": return !!c.news;
       case "funding": return !!c.finance;
       case "career": return !!(c.bio || hasStatusCard(c.status) || c.career.length);
@@ -250,6 +253,7 @@ export class CandidateSheet {
 
   _render(c) {
     const panels = {
+      race: () => this._race(c),
       news: () => this._news(c.news),
       funding: () => this._money(c),
       career: () => this._career(c),
@@ -319,7 +323,9 @@ export class CandidateSheet {
       h(
         "footer",
         { class: "cs-foot" },
-        c.researched
+        c.race
+          ? "Candidate lists are compared across public election records and news guides. Confirm yours on your official sample ballot."
+          : c.researched
           ? "Research profile from the Mapachusetts candidate database. News summaries are AI-generated from linked reporting. Always verify claims with the sources."
           : "Candidate list compiled from Wikipedia's 2026 election pages. Money totals are from FEC filings. Confirm details with your election office."
       )
@@ -481,6 +487,49 @@ export class CandidateSheet {
 
   // -- Tab: Career -----------------------------------------------------------------
 
+  // -- Tab: On the ballot (Massachusetts down-ballot candidates) ------------------
+  _race(c) {
+    const r = c.race;
+    const date = r.electionDate ? formatDate(r.electionDate) : null;
+    return [
+      h("h3", { class: "cs-sub", text: r.office }),
+      r.description && h("p", { class: "cs-bio", text: r.description }),
+      h("p", { class: "cs-note", text: `${date ? `Election: ${date}. ` : ""}${r.uncontested ? "Only one candidate is listed for this race." : ""}` }),
+      h("h3", { class: "cs-sub", text: r.uncontested ? "Candidate" : "Candidates in this race" }),
+      h(
+        "ul",
+        { class: "cs-racelist" },
+        r.candidates.map((p) =>
+          h(
+            "li",
+            {},
+            p.slug === c.slug
+              ? h("strong", { text: p.name })
+              : h("button", { class: "cs-cand", type: "button", onclick: () => this.open(p.slug), text: p.name }),
+            ` ${[p.party, p.incumbent ? "incumbent" : ""].filter(Boolean).join(", ")}`.replace(/^ $/, "")
+          )
+        )
+      ),
+      h("h3", { class: "cs-sub", text: "Where this comes from" }),
+      h(
+        "p",
+        { class: "cs-note", text: "Compared across public election records and news guides on Oct. 24, 2026. Write-in candidates are always allowed and are not listed. Your official sample ballot is the final word." + (r.note ? ` ${r.note}` : "") }
+      ),
+      h(
+        "ul",
+        { class: "cs-cites" },
+        (r.sources || []).filter((u) => safeUrl(u)).map((u) => {
+          let host = u;
+          try {
+            host = new URL(u).hostname.replace(/^www\./, "");
+          } catch {
+            /* keep the url */
+          }
+          return h("li", {}, link(u, host));
+        })
+      ),
+    ];
+  }
   _statusCard(s) {
     return h(
       "div",

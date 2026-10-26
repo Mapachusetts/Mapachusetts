@@ -27,6 +27,7 @@ import {
   fetchRacesForPlace,
   fetchEventsForPlace,
   fetchOfficeholdersForPlace,
+  fetchQuestionsForPlace,
   fetchStack,
   fetchBoundary,
   fetchChildShapes,
@@ -40,6 +41,13 @@ import { totals } from "../data/candidates.js";
 import { findNodeById } from "../data/places.js";
 import { TRENDING, TRENDING_META } from "../data/trending.generated.js";
 import { icon } from "./icons.js";
+import { isPilot, accountsConfigured, assistantConfigured } from "./config.js";
+import { auth } from "./auth.js";
+import { AccountDialog } from "./account.js";
+import { VotingInfo, votingSummary } from "./voting-info.js";
+import { AskPanel } from "./assistant.js";
+import { ReportsPanel } from "./reports.js";
+import { h } from "./dom.js";
 
 const $ = (id) => document.getElementById(id);
 const THEME_KEY = "mapachusetts-theme";
@@ -94,6 +102,12 @@ const globe = new Globe(
 
     // The map key is only useful while the shading is visible.
     onZoom: (zoom) => ui.setLegendVisible(zoom < 5.2),
+
+    // A protest report dot was clicked (signed-in pilot feature).
+    onReportClick: ({ id }) => {
+      ui.showTab("reports");
+      reports.openOnMap(id);
+    },
   },
   theme
 );
@@ -120,6 +134,11 @@ const ui = new UI(
     ballotList: $("ballotList"),
     eventsList: $("eventsList"),
     status: $("status"),
+    extraTabs: [
+      { id: "voting", tab: $("tabVoting"), panel: $("votingList") },
+      { id: "ask", tab: $("tabAsk"), panel: $("askList") },
+      { id: "reports", tab: $("tabReports"), panel: $("reportsList") },
+    ],
   },
   {
     onAscend: () => nav.ascend(),
@@ -144,6 +163,10 @@ const ui = new UI(
     onHoverLayer: (id) => globe.setHover(id),
     // A candidate on a race card was clicked.
     onOpenCandidate: (slug) => sheet.open(slug),
+    // Reports are only fetched while their tab has been opened at least once.
+    onTab: (id) => {
+      if (id === "reports") refreshPilot();
+    },
   }
 );
 ui.setTheme(theme);
@@ -151,6 +174,83 @@ ui.showTab("ballot");
 
 // The candidate profile sheet. It slides over the dossier.
 const sheet = new CandidateSheet($("candidateSheet"));
+
+// ----- Pilot features (Massachusetts): voting info, accounts, assistant, reports ----
+
+const accountDialog = new AccountDialog($("accountDialog"), $("accountBtn"));
+const votingInfo = new VotingInfo($("votingList"), { onChange: () => paintVotingBadge() });
+const reports = new ReportsPanel($("reportsList"), {
+  globe,
+  onChange: (n) => ui.setTabCount("reports", n),
+});
+let ask = null;
+
+// What the Ask helper is told about the page. Public data only, capped in size.
+const view = { node: null, stack: [], races: [], questions: [], holders: [], stateCode: null };
+function askContext() {
+  const lines = [];
+  const place = view.node ? view.node.name : "";
+  lines.push(`Place: ${place}${view.stateCode ? `, ${view.stateCode}` : ""}`);
+  if (view.stack.length) lines.push(`Layers: ${view.stack.map((j) => `${j.kind}: ${j.name}`).join("; ")}`);
+  if (view.holders.length) lines.push(`In office now: ${view.holders.map((x) => `${x.office}: ${x.name}${x.party ? ` (${x.party})` : ""}`).join("; ")}`);
+  for (const r of view.races) {
+    lines.push(`Race: ${r.office}: ${(r.candidates || []).map((c) => `${c.name}${c.party ? ` (${c.party})` : ""}`).join(", ") || "no candidates listed"}`);
+  }
+  for (const q of view.questions) lines.push(`Ballot question ${q.number || ""}: ${q.title}. Yes: ${q.yesVote} No: ${q.noVote}`);
+  return {
+    place: {
+      name: place,
+      state: view.stateCode || undefined,
+      layers: view.stack.slice(0, 12).map((j) => ({ kind: j.kind, name: j.name })),
+    },
+    context: lines.join("\n").slice(0, 3000),
+  };
+}
+
+// Each pilot tab either shows the real panel, or tells you what an account adds.
+function lockedPanel(title, why) {
+  const note = !accountsConfigured()
+    ? "Accounts aren't switched on for this copy of the site yet."
+    : "Create a free account (or sign in) to use this.";
+  return h(
+    "div",
+    { class: "locked" },
+    h("h3", { class: "vi-title", text: title }),
+    h("p", { text: why }),
+    h("p", { class: "ask-help", text: note }),
+    accountsConfigured() && h("button", { class: "btn btn-accent", type: "button", text: "Sign in or create an account", onclick: () => accountDialog.open() })
+  );
+}
+
+let pilotState = false;
+function paintVotingBadge() {
+  const sum = votingSummary();
+  ui.setTabCount("voting", sum.forYou || sum.attention);
+}
+// Show the pilot tabs for pilot places, and the right content for who is signed in.
+function refreshPilot() {
+  const features = pilotState && assistantConfigured() && auth.signedIn;
+  ui.setTabVisible("voting", pilotState);
+  ui.setTabVisible("ask", pilotState);
+  ui.setTabVisible("reports", pilotState);
+  if (pilotState) paintVotingBadge();
+
+  const askRoot = $("askList");
+  const repRoot = $("reportsList");
+  if (features) {
+    if (!ask) ask = new AskPanel(askRoot, { getContext: askContext });
+    else if (!askRoot.querySelector(".ask-form")) ask = new AskPanel(askRoot, { getContext: askContext });
+    if (!repRoot.querySelector(".rep-form")) reports.render();
+    reports.activate();
+  } else {
+    ask = null;
+    reports.deactivate();
+    askRoot.replaceChildren(lockedPanel("Ask a question", "An AI helper answers nonpartisan questions about politics and how voting works, using what is on your page."));
+    repRoot.replaceChildren(lockedPanel("Protest reports", "See reports from other account holders on the map, and report a protest you can see where you are."));
+  }
+}
+auth.onChange(() => refreshPilot());
+auth.init().then(refreshPilot);
 
 const search = new SearchBox(
   {
@@ -238,6 +338,16 @@ nav.subscribe(async (state) => {
   const { current, path } = state;
   const isWorld = current.level === "globe";
   sheet.close(); // a profile belongs to the place it was opened from
+  const stateCode = path.find((n) => n.level === "state")?.code ?? null;
+  pilotState = isPilot(stateCode);
+  view.node = current;
+  view.stateCode = stateCode;
+  view.stack = [];
+  view.races = [];
+  view.questions = [];
+  view.holders = [];
+  globe.closeReportPopup();
+  refreshPilot();
 
   // Reset everything that belongs to the previous place.
   dock.status = "loading";
@@ -274,7 +384,7 @@ nav.subscribe(async (state) => {
   // Pins for the world view; the rest are drawn below once their data arrives.
   if (isWorld) {
     globe.renderMarkers(state.children);
-    ui.renderBallot([], { node: current, stack: [], status: "idle" });
+    ui.renderBallot([], { node: current, stack: [], status: "idle", stateCode: null });
     ui.renderEvents([], current);
     return;
   }
@@ -310,16 +420,19 @@ nav.subscribe(async (state) => {
       if (!stale()) ui.renderEvents(events, current);
     });
 
-    const [races, holders] = await Promise.all([
+    const [races, holders, questions] = await Promise.all([
       fetchRacesForPlace(current.id, res.stack),
       fetchOfficeholdersForPlace(current.id, res.stack),
+      fetchQuestionsForPlace(current.id, res.stack),
     ]);
     if (stale()) return;
+    Object.assign(view, { stack: res.stack, races, holders, questions });
     ui.renderBallot(races, {
       node: current,
       stack: res.stack,
       holders,
-      stateCode: path.find((n) => n.level === "state")?.code ?? null,
+      questions,
+      stateCode,
       status: "ready",
       openKind: levelKind(current.level, res.unincorporated),
       unincorporated: res.unincorporated,

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#060b1d" />
   <title>Mapachusetts: politics, mapped to where you live</title>
   <meta
@@ -65,6 +65,10 @@
       </button>
 
       <button class="btn btn-glass btn-icon" id="themeBtn" type="button" aria-pressed="false" aria-label="Switch to the day map" title="Switch to the day map"></button>
+
+      <button class="btn btn-glass btn-icon" id="accountBtn" type="button" aria-haspopup="dialog" aria-label="Account: sign in or create one" title="Account">
+        <span class="ico-slot" data-icon="user" data-icon-size="20" aria-hidden="true"></span>
+      </button>
     </header>
 
     <!-- Browse by list: for people who'd rather not use a map -->
@@ -150,11 +154,24 @@
         <button class="tab" id="tabEvents" type="button" role="tab" aria-selected="false" aria-controls="eventsList" tabindex="-1">
           <span class="ico-slot" data-icon="events" aria-hidden="true"></span> Events <span class="count" id="eventsCount">0</span>
         </button>
+        <!-- Pilot tabs (Massachusetts): shown by js/app.js only where they apply -->
+        <button class="tab" id="tabVoting" type="button" role="tab" aria-selected="false" aria-controls="votingList" tabindex="-1" hidden>
+          <span class="ico-slot" data-icon="alert" aria-hidden="true"></span> Voting <span class="count" id="votingCount" hidden>0</span>
+        </button>
+        <button class="tab" id="tabAsk" type="button" role="tab" aria-selected="false" aria-controls="askList" tabindex="-1" hidden>
+          <span class="ico-slot" data-icon="chat" aria-hidden="true"></span> Ask
+        </button>
+        <button class="tab" id="tabReports" type="button" role="tab" aria-selected="false" aria-controls="reportsList" tabindex="-1" hidden>
+          <span class="ico-slot" data-icon="sign" aria-hidden="true"></span> Reports <span class="count" id="reportsCount" hidden>0</span>
+        </button>
       </div>
 
       <div class="tab-scroll">
         <div id="ballotList" role="tabpanel" aria-labelledby="tabBallot" tabindex="0"></div>
         <div id="eventsList" role="tabpanel" aria-labelledby="tabEvents" tabindex="0" hidden></div>
+        <div id="votingList" role="tabpanel" aria-labelledby="tabVoting" tabindex="0" hidden></div>
+        <div id="askList" role="tabpanel" aria-labelledby="tabAsk" tabindex="0" hidden></div>
+        <div id="reportsList" role="tabpanel" aria-labelledby="tabReports" tabindex="0" hidden></div>
       </div>
 
       <footer class="dossier-foot">
@@ -164,11 +181,12 @@
           polling place with your local election office.
         </p>
         <p>
-          <strong>People:</strong> candidates come from Wikipedia's 2026 election pages
-          and FEC filings. Officeholders come from Congress, Senate.gov, Open States and
-          Massachusetts sources. State, county and city officeholders are listed for
-          Massachusetts only; state legislature, county, city and school board
-          candidates are not listed yet.
+          <strong>People:</strong> U.S. Senate, governor and U.S. House candidates come from
+          Wikipedia's 2026 election pages and FEC filings. Officeholders come from
+          Congress, Senate.gov, Open States and Massachusetts sources. Massachusetts
+          also lists candidates for statewide offices, Governor's Council, the
+          legislature and county offices, plus ballot questions. In other states
+          those, and state, county and city officeholders, are not listed yet.
         </p>
       </footer>
     </aside>
@@ -190,6 +208,8 @@
     <div class="status-banner glass" id="status" role="status" hidden></div>
     <noscript><p class="noscript">This map needs JavaScript. Please turn it on to explore.</p></noscript>
   </div>
+
+  <dialog class="acct-dialog" id="accountDialog" aria-labelledby="acctTitle"></dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>

@@ -84,6 +84,8 @@ export class Globe {
     this._stackShapes = new Map(); // id -> Feature
     this._bounds = new Map(); // stack shape id -> [w, s, e, n]
     this._kids = EMPTY_FC;
+    this._reports = EMPTY_FC; // protest reports (signed-in pilot feature)
+    this._reportPopup = null;
     this._kidBounds = new Map(); // id -> [w, s, e, n]
     this._focusId = null;
     this._hoverId = null;
@@ -250,12 +252,68 @@ export class Globe {
       paint: { "line-color": ["get", "color"], "line-width": 1.4, "line-opacity": 0.75 },
     }, underLabels);
     this._paintHighlight();
+
+    // 4. Protest reports: one dot per report, colored by intensity. The colors
+    //    are never the only cue: the popup and the list name the level in words.
+    map.addSource("reports", { type: "geojson", data: this._reports });
+    const byLevel = ["match", ["get", "intensity"], 1, "#22c55e", 2, "#facc15", 3, "#f97316", 4, "#ef4444", "#94a3b8"];
+    map.addLayer({
+      id: "reports-halo", type: "circle", source: "reports",
+      paint: { "circle-radius": 18, "circle-color": byLevel, "circle-opacity": 0.22, "circle-blur": 0.6 },
+    });
+    map.addLayer({
+      id: "reports-dot", type: "circle", source: "reports",
+      paint: {
+        "circle-radius": 8, "circle-color": byLevel,
+        "circle-stroke-color": "#ffffff", "circle-stroke-width": 2.5,
+      },
+    });
   }
 
   // Re-send our data after a style change.
   _pushData() {
     this.map.getSource("kids")?.setData(this._kids);
+    this.map.getSource("reports")?.setData(this._reports);
     this._pushStack();
+  }
+
+  // ----- Protest reports ---------------------------------------------------------
+
+  /** Replace the report dots. `features` are GeoJSON Points with {id, intensity} properties. */
+  setReports(features) {
+    this._reports = { type: "FeatureCollection", features: features || [] };
+    this.map.getSource("reports")?.setData(this._reports);
+    if (!features || !features.length) this.closeReportPopup();
+  }
+
+  /** Show a popup at a report; `content` is a DOM node built by the caller. */
+  showReportPopup(lngLat, content, onClose) {
+    this.closeReportPopup();
+    this._reportPopup = new maplibregl.Popup({ closeButton: true, offset: 16, className: "report-popup", maxWidth: "300px" })
+      .setLngLat(lngLat)
+      .setDOMContent(content)
+      .addTo(this.map);
+    this._reportPopup.on("close", () => {
+      this._reportPopup = null;
+      onClose?.();
+    });
+  }
+
+  closeReportPopup() {
+    if (this._reportPopup) {
+      const p = this._reportPopup;
+      this._reportPopup = null;
+      p.remove();
+    }
+  }
+
+  _reportAt(point) {
+    if (!this.map.getLayer("reports-dot")) return null;
+    const hit = this.map.queryRenderedFeatures(
+      [[point.x - 10, point.y - 10], [point.x + 10, point.y + 10]],
+      { layers: ["reports-dot"] }
+    )[0];
+    return hit || null;
   }
 
   _pushStack() {
@@ -362,6 +420,12 @@ export class Globe {
   }
 
   _onMapClick(e) {
+    const report = this._reportAt(e.point);
+    if (report) {
+      const [lng, lat] = report.geometry.coordinates;
+      this.handlers.onReportClick?.({ id: report.properties.id, lngLat: [lng, lat] });
+      return;
+    }
     const shape = this._shapeAt(e.point);
     if (shape) {
       this.handlers.onShapeClick?.({
@@ -378,6 +442,10 @@ export class Globe {
 
   _onMapHover(e) {
     const canvas = this.map.getCanvas();
+    if (this._reportAt(e.point)) {
+      canvas.style.cursor = "pointer";
+      return;
+    }
     const shape = this._shapeAt(e.point);
     if (shape) {
       canvas.style.cursor = "pointer";

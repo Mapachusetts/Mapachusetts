@@ -457,6 +457,44 @@ const ICONS = {
     p("M6.5 15.5L10.5 11.5L13.5 14L18 8.5") +
     p("M14.5 8.5H18V12") +
     n(10.5, 11.5, 1.5),
+  /* ---------- Notices, accounts, reports ---------- */
+  // Warning triangle; node is the exclamation dot.
+  alert:
+    fp("M12 3.8L21 19.5H3Z") +
+    p("M12 9.5V14") +
+    n(12, 16.7, 1.2),
+  // Head and shoulders; node is the head.
+  user:
+    fcirc(12, 12, 9.5) +
+    p("M6.2 18.6C7.6 16.3 9.6 15.3 12 15.3C14.4 15.3 16.4 16.3 17.8 18.6") +
+    n(12, 9.4, 2.6),
+  // Speech bubble; node is the typing dot.
+  chat:
+    fp("M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V13.5A2.5 2.5 0 0 1 17.5 16H11L6.5 20V16A2.5 2.5 0 0 1 4 13.5Z") +
+    p("M8 8.8H16M8 11.8H13") +
+    n(16.5, 11.8, 1.3),
+  // Hand sign on a post; node is the post foot.
+  sign:
+    fr(5, 3.5, 14, 9, 2) +
+    r(5, 3.5, 14, 9, 2) +
+    p("M12 12.5V21M8.5 8H15.5") +
+    n(12, 20, 1.4),
+  // Envelope; node is the seal.
+  mail:
+    fr(3.5, 5.5, 17, 13, 2.5) +
+    r(3.5, 5.5, 17, 13, 2.5) +
+    p("M4.5 7.5L12 13L19.5 7.5") +
+    n(12, 13, 1.3),
+  // Circle with an i; node is the dot.
+  info:
+    fcirc(12, 12, 9.5) +
+    p("M12 11V16.5") +
+    n(12, 7.9, 1.4),
+  // Flag on a pole; node is the pole base.
+  flag:
+    fp("M6 4.5H17L14.5 8.8L17 13H6Z") +
+    p("M6 3.5V20.5") +
+    n(6, 20, 1.3),
   // Globe with meridians; node is the center.
   globe:
     fcirc(12, 12, 9) +

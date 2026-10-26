@@ -21,8 +21,9 @@
 
 import { POLITICIANS, NEWS_SUMMARIES, CANDIDATE_PROFILES } from "./political-data.generated.js";
 import { NOMINEES, NOMINEES_META } from "./nominees.generated.js";
+import { MA_BALLOT_RACES, MA_BALLOT_META } from "./ma-ballot.generated.js";
 
-export { NOMINEES_META };
+export { NOMINEES_META, MA_BALLOT_META };
 
 // ----- Small helpers ----------------------------------------------------------
 
@@ -291,6 +292,146 @@ function mergeCareer(dbCareer, profileCareer) {
 
 buildPeople();
 
+// ----- Massachusetts: every other race on the Nov. 3 ballot (pilot state) ----------
+//
+// data/ma-ballot.generated.js lists the verified candidates for the statewide
+// offices below governor, Governor's Council, State Senate and House, and county
+// offices. Each person gets a basic profile (who they run against, where it was
+// confirmed) so the search box can find them. Nobody here has research, funding
+// or news pages: those tabs only appear when there is something real to show.
+
+const MA_CATEGORY = {
+  "Lieutenant Governor": "executive",
+  "Attorney General": "executive",
+  "Secretary of the Commonwealth": "executive",
+  "Treasurer and Receiver-General": "executive",
+  "State Auditor": "executive",
+  "Governor's Council": "executive",
+  "State Senator": "legislative",
+  "State Representative": "legislative",
+};
+
+const MA_DESCRIPTION = {
+  "Lieutenant Governor": "Second-highest executive in Massachusetts. Takes over if the governor cannot serve. Elected on a ticket with the governor.",
+  "Attorney General": "The state's chief lawyer and law enforcement officer.",
+  "Secretary of the Commonwealth": "Runs elections, keeps public records and registers businesses.",
+  "Treasurer and Receiver-General": "Manages the state's money, debt and lottery.",
+  "State Auditor": "Audits state agencies and programs.",
+  "Governor's Council": "Eight elected councillors who vote on judicial nominations, pardons and some state payments.",
+  "State Senator": "Votes on state laws and the state budget for one Massachusetts Senate district.",
+  "State Representative": "Votes on state laws and the state budget for one Massachusetts House district.",
+  "District Attorney": "Prosecutes crimes for one or more counties.",
+  "Register of Probate": "Runs the county court division for wills, estates, guardianships and name changes.",
+  "County Treasurer": "Manages county money.",
+  "County Commissioner": "Oversees county government where it still exists.",
+  Sheriff: "Runs the county jail and house of correction.",
+};
+
+/** "State Representative" + "3rd Suffolk District" -> "State Representative, 3rd Suffolk District". */
+function maOfficeLabel(r) {
+  if (r.office === "Governor's Council") {
+    const n = /:(\d+)$/.exec(r.id);
+    return n ? `Governor's Council, District ${n[1]}` : r.office;
+  }
+  return r.districtName ? `${r.office}, ${r.districtName}` : r.office;
+}
+
+const MA_RACE_LIST = []; // Race objects (ballot shape) with scope + slugs
+
+function buildMassachusettsPeople() {
+  const seenPeople = new Map(); // "office|district|name" -> slug (a DA repeats across counties)
+  const dummy = { state: "MA", district: null, office: "ma" };
+  for (const r of MA_BALLOT_RACES) {
+    const label = maOfficeLabel(r);
+    const slugs = [];
+    for (const c of r.candidates) {
+      const key = `${r.office}|${r.districtName || ""}|${c.name}`;
+      let slug = seenPeople.get(key);
+      if (!slug) {
+        slug = uniqueSlug(slugify(c.name), { ...dummy, office: slugify(r.districtName || r.office) });
+        seenPeople.set(key, slug);
+        PEOPLE.set(slug, {
+          slug,
+          name: c.name,
+          role: c.incumbent ? `${label}, seeking re-election` : `Candidate for ${label}`,
+          party: normalizeParty(c.party),
+          bio: null,
+          photo: null,
+          wikipedia: null,
+          openSecretsUrl: null,
+          status: {
+            statusType: c.incumbent ? "incumbent" : "running",
+            statusLabel: c.incumbent ? "Incumbent" : "On the 2026 ballot",
+            termInfo: `On the Nov. 3, 2026 ballot for ${label}.`,
+            currentTitle: "",
+            state: "Massachusetts",
+            runningFor: label,
+            plainEnglish: "",
+          },
+          career: [],
+          finance: null,
+          opinions: [],
+          sources: [],
+          misconceptions: [],
+          news: null,
+          researched: false,
+          onBallot: true,
+          raceId: r.id,
+          raceOffice: label,
+          state: "MA",
+          incumbent: !!c.incumbent,
+          race: {
+            office: label,
+            description: MA_DESCRIPTION[r.office] || "",
+            electionDate: r.electionDate,
+            uncontested: !!r.uncontested,
+            sources: r.sources,
+            verifiedOn: r.verifiedOn,
+            note: r.note || null,
+            // Everyone in the race; filled in below once all slugs exist.
+            candidates: [],
+          },
+        });
+      }
+      slugs.push(slug);
+    }
+    const cands = r.candidates.map((c, i) => ({
+      name: c.name,
+      party: normalizeParty(c.party),
+      incumbent: !!c.incumbent,
+      slug: slugs[i],
+    }));
+    for (const slug of slugs) {
+      const person = PEOPLE.get(slug);
+      if (person && person.race && person.raceId === r.id) person.race.candidates = cands;
+    }
+    MA_RACE_LIST.push({
+      id: r.id,
+      office: label,
+      kind: r.kind,
+      category: MA_CATEGORY[r.office] || "local",
+      term: r.term,
+      electionDate: r.electionDate,
+      description: MA_DESCRIPTION[r.office] || "",
+      source: "ma-ballot",
+      sourceUrl: r.sources[0] || null,
+      sources: r.sources,
+      verifiedOn: r.verifiedOn,
+      uncontested: !!r.uncontested,
+      note: r.note || null,
+      scope: r.scope,
+      candidates: cands,
+    });
+  }
+}
+
+buildMassachusettsPeople();
+
+/** Massachusetts ballot races below U.S. House (see data/ma-ballot.js to match them to a place). */
+export function massachusettsRaces() {
+  return MA_RACE_LIST.map((r) => ({ ...r, candidates: r.candidates.map((c) => ({ ...c })) }));
+}
+
 // ----- Public API ------------------------------------------------------------------
 
 /** Every candidate profile we have, A to Z by last name. */
@@ -313,6 +454,7 @@ export function candidateCount() {
 export function searchCandidates(query, limit = 4) {
   const q = norm(query).trim();
   if (q.length < 2) return [];
+  const qWords = q.split(/\s+/).filter(Boolean);
   const scored = [];
   for (const c of PEOPLE.values()) {
     const name = norm(c.name);
@@ -320,6 +462,7 @@ export function searchCandidates(query, limit = 4) {
     if (name.startsWith(q)) score = 4;
     else if (name.split(/\s+/).some((w) => w.startsWith(q))) score = 3;
     else if (name.includes(q)) score = 2;
+    else if (qWords.length > 1 && qWords.every((w) => name.split(/\s+/).some((n) => n.startsWith(w)))) score = 3.5;
     else if (norm(`${c.role} ${c.party} ${STATE_NAMES[c.state] || ""}`).includes(q)) score = 1;
     if (score) scored.push({ c, score: score + (c.researched ? 0.5 : 0) });
   }

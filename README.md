@@ -24,6 +24,17 @@ state.
   with official FEC money totals. Click one for a profile. Where the team has
   researched someone (cited news, issues, career, myths and facts) the profile
   has more tabs.
+- **Massachusetts pilot (everything on your ballot):** every layer you live in
+  stays visible as you drop from the nation to your city, with who is in office and
+  who is running at each level; the nine statewide ballot questions in plain words
+  (plus any district-only question); a *Voting* tab that warns what changed since
+  the last election (for example the federal mail-ballot rule fight) and lets you
+  say how you voted in 2024 so the notices that matter to you stand out; and a
+  phone-friendly layout. See "Massachusetts pilot".
+- **Accounts (optional):** signed-in Massachusetts users get an *Ask* tab (an AI
+  helper for nonpartisan questions, backed by Kiro) and a *Reports* tab (report a
+  protest from where you stand, rate its intensity, and see recent reports on the
+  map). See "Accounts, the assistant server and protest reports".
 - **Races people are looking at:** the front page lists a geographically
   diverse set of races, chosen by recent attention (see "Trending").
 - **U.S. only for now.** The rest of the world stays on the globe but is greyed
@@ -70,7 +81,10 @@ production needs HTTPS. No API keys anywhere.
 | Who holds office: Massachusetts statewide, legislature, U.S. House, sheriffs, DAs, 47 mayors | Covered, Massachusetts only | malegislature.gov, Open States, congress-legislators, MA election results, city sites. 3 House seats are vacant and not shown. Towns, city councils and school committees are not included |
 | Who holds office: smaller seats in other states | **Not covered yet** | Add a generated file in the shape of `Officeholder` (`data/types.js`) and list it in `data/officeholders.js` |
 | Public meetings | 25 cities with a Legistar calendar, plus Election Day everywhere | Legistar Web API |
-| State legislature, county, city, school board candidates | **Not covered.** No free national source exists | See "Adding more" |
+| Massachusetts: statewide offices below governor, Governor's Council, State Senate and House, county offices | Covered where we could confirm the roster from at least two sources (see `data/ma-ballot.generated.js` for counts) | Official primary results (PD43+), municipal sample ballots, Ballotpedia, BallotReady, news guides |
+| Massachusetts ballot questions | All 9 statewide, plus the one district-only question that could be verified | Hand-curated in `data/ma-ballot-questions.js` from town copies of the official booklet |
+| Massachusetts voting-change notices and key dates | 28 notices, 10 dates, hand-curated | `data/ma-voting-notices.js` (court status can change daily) |
+| State legislature, county, city, school board candidates in other states | **Not covered.** No free national source exists | See "Adding more" |
 | Louisiana U.S. House | Pending: no nominees were listed on Wikipedia when the data was generated | |
 | U.S. territories, tribal lands | Not covered yet | |
 
@@ -91,6 +105,7 @@ library only and needs internet.
 | `python3 scripts/export_trending.py` | `data/trending.generated.js` | Front-page "races people are looking at" |
 | `python3 scripts/export_officeholders.py` | `data/officeholders.generated.js` | President, VP, senators, governors. Exits non-zero unless it finds 1, 1, 100 and 50. `--refresh` bypasses the cache |
 | `python3 scripts/export_ma_officeholders.py` | `data/officeholders.ma.generated.js` | Massachusetts only. Exits non-zero if a legislator can't be matched to a Census district. Some mayors, sheriffs and DAs are kept in curated tables inside the script (with sources); re-check them after each election |
+| `python3 scripts/export_ma_ballot.py` | `data/ma-ballot.generated.js` | Massachusetts pilot candidates below U.S. House. A race is written only if its roster agrees across two independent sources; the rest are listed in the script's notes |
 | `python3 scripts/export_candidates.py` | `data/political-data.generated.js` | Researched profiles from `supabase/seed-data` |
 
 Nominees, meetings and trending change daily near an election. Running these on
@@ -106,6 +121,73 @@ not importance or competitiveness. To keep the front page diverse, the script
 takes the top race from each Census region first (Northeast, Midwest, South,
 West) and then fills the remaining slots, so it is never all one corner of the
 country. The page says what it is based on and the dates.
+
+## Massachusetts pilot
+
+Massachusetts is the test state for the features below. They are switched on by
+`pilotStates` in `js/config.js` (one list, one place) and nothing in other states
+changes.
+
+- **Whole ballot, every layer.** In the pilot every layer that has something to show
+  (officeholders, races or questions) starts open, and the layer header says how
+  many people are in office. Other states keep the one-layer-open view.
+- **Candidates.** `data/ma-ballot.js` matches races to the layers covering your spot:
+  statewide offices by state, State Senate/House by the Census district id, county
+  offices by county id, and Governor's Council by State Senate district (exact even
+  where a town is split, such as Boston). Each person gets a basic profile and is
+  findable in search. Races we could not confirm are simply absent; the page says
+  so and points to the official sample ballot.
+- **Ballot questions.** Yes and No shown side by side, what happens if it passes and
+  when, cost, attributed arguments, and sources. Nothing in any question changes how
+  you vote on Nov. 3, 2026.
+- **Voting tab.** Key dates and 28 notices sorted into Changed, Could still change,
+  Same as before and Good to know. Choose how you voted in 2024 (kept only in your
+  browser) and the notices that apply to you are marked. A banner on the Ballot tab
+  shows the next deadline.
+- **Keeping it honest.** The two curated files carry their sources and the date they
+  were checked. Re-check them before each release and delete notices after Nov. 3.
+  They were compiled by an AI assistant from public sources and have not been
+  reviewed by an election official. The pages say so.
+
+## Accounts, the assistant server and protest reports
+
+Accounts are optional and the site works fully without them. Turn them on in four steps:
+
+1. **Database.** Run `supabase/accounts.sql` in the Supabase SQL editor. It adds
+   profiles, protest reports (the text people write is private; only the AI summary,
+   rounded location, intensity and time are readable by signed-in users), flags (three
+   flags hide a report) and usage counters, all behind Row Level Security. Then run
+   the checks listed in `server/README.md`.
+2. **Assistant server.** `server/assistant.py` (Python standard library only) checks
+   logins, rate-limits people, calls Kiro, and is the only thing allowed to write
+   reports. It holds `SUPABASE_SERVICE_ROLE_KEY` and `KIRO_API_KEY`, so it must run on
+   a server you control (not in the browser, and not on Vercel's serverless runtime
+   since it needs the Kiro CLI). `python3 server/check_kiro.py` is a one-time smoke
+   test. Tests: `python3 -m unittest discover -s server/tests` (64 tests with fake
+   Supabase and fake Kiro).
+3. **Site settings.** Fill `supabaseUrl`, `supabaseAnonKey` (public by design) and
+   `assistantUrl` in `js/config.js`. Never put a secret there.
+4. **Serve over HTTPS** in production, and set `ALLOWED_ORIGINS` on the server.
+
+What account holders get, in Massachusetts only:
+
+- **Ask.** Questions go to Kiro with a short summary of what is on your page. The
+  helper is told to stay nonpartisan, to say when it is unsure, never to recommend a
+  candidate or discourage voting, and to send people to the official lookup for dates,
+  deadlines, ID rules and polling places.
+- **Reports.** The report must be filed from your current location (accuracy of 200 m
+  or better, inside Massachusetts). You rate it Peaceful, Tense, Disruptive or Unsafe
+  and describe it. Kiro writes a neutral one or two sentence summary of the protest
+  only: no opinions, no motives, no names or details that identify private people.
+  Text with emails, phone numbers, license plates or street addresses is refused.
+  Reports expire after 6 hours, are limited per person, and can be flagged or deleted
+  by their author. Only signed-in users can see reports.
+- **How "Kiro API" works.** Kiro has no hosted chat API. The supported way is Kiro CLI
+  headless mode (`KIRO_API_KEY` plus `kiro-cli chat --no-interactive`), which the
+  server runs with no tools allowed and an empty working directory. Usage is billed to
+  the Kiro account that owns the key, so confirm Kiro's terms allow serving public
+  users before launch. The flags are documented as of Oct 2026 and could not be run in
+  this build environment (see "Not verified" below).
 
 ## Where does X go? (start here when adding data)
 
@@ -176,10 +258,25 @@ js/
   search.js        Search-as-you-type box (accessible combobox)
   geocode.js       Place, street address and ZIP search (Photon), U.S.-only filter
   geolocation.js   Browser location, as a promise
+  config.js        Public deployment settings and the pilot-state list
+  voting-info.js   Voting tab (key dates, change notices, "how did you vote last time")
+  auth.js          Tiny Supabase Auth client (no third-party code on a login page)
+  account.js       Account dialog
+  api.js           Calls to the assistant server and Supabase's table API
+  assistant.js     Ask tab
+  reports.js       Reports tab and the map pins
+  dom.js           Safe DOM helpers (user text always uses textContent)
+
+server/            Assistant server, its tests and a Kiro smoke test
+supabase/accounts.sql  Tables and Row Level Security for accounts and reports
 
 data/
   civic.js         THE data seam: races and events for a place
   candidates.js    People and races from the generated files (merge logic from lib/candidates.ts)
+  ma-ballot.js                 Massachusetts pilot: races and ballot questions matched to your layers
+  ma-ballot.generated.js         GENERATED: MA candidates below U.S. House
+  ma-ballot-questions.js         CURATED: the 2026 ballot questions
+  ma-voting-notices.js           CURATED: voting-change notices and key dates
   officeholders.js             Who holds each office now, matched to the Census stack
   officeholders.generated.js     GENERATED: President, VP, senators, governors
   officeholders.ma.generated.js  GENERATED: Massachusetts statewide, legislature, county, mayors
@@ -241,6 +338,16 @@ data/
   date. Treat them as a guide and confirm your polling place with your local
   election office.
 - **Not covered yet:** U.S. territories, other languages, and automated tests.
+- **Not verified in this build.** Browser flows were tested against fakes of Supabase
+  and Kiro, and the assistant server against a fake of each. Not run against a real
+  Supabase project (the column-level grants and Row Level Security in
+  `supabase/accounts.sql` need the checks in `server/README.md`) or the real Kiro CLI
+  (flags and output format are assumptions listed in `server/README.md`).
+- **Protest reports can be misused.** They are unverified, AI-summarized and visible to
+  signed-in users, and the server blocks personal details, but a person can still file
+  a false report. Decide who may sign up, who reviews flags, and your retention policy
+  before launching; the safeguards in this repo are rate limits, expiry, flags and
+  deletion by the author.
 - `presentation/`, `.kiro/` and `KIRO_USAGE.md` are not part of the site.
 
 ## Political data in the globe

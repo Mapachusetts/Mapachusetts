@@ -11,6 +11,8 @@ import { levelByKey } from "../data/levels.js";
 import { icon } from "./icons.js";
 import { getCandidate, initials } from "../data/candidates.js";
 import { OFFICEHOLDER_INFO, hasLocalOfficeholders, profileSlugFor } from "../data/officeholders.js";
+import { isPilot } from "./config.js";
+import { votingSummary, formatDeadline, shortLabel } from "./voting-info.js";
 
 const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" });
 const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
@@ -38,18 +40,30 @@ export class UI {
     refs.worldBtn.addEventListener("click", () => handlers.onReset?.());
     refs.themeBtn.addEventListener("click", () => handlers.onThemeToggle?.());
 
-    refs.tabBallot.addEventListener("click", () => this.showTab("ballot"));
-    refs.tabEvents.addEventListener("click", () => this.showTab("events"));
-    // Arrow keys move between tabs (standard tab pattern).
-    for (const tab of [refs.tabBallot, refs.tabEvents]) {
-      tab.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-          const next = tab === refs.tabBallot ? "events" : "ballot";
-          this.showTab(next);
-          (next === "ballot" ? refs.tabBallot : refs.tabEvents).focus();
-        }
+    // Tabs: Ballot and Events everywhere, plus pilot tabs (Voting info, Ask,
+    // Reports) that the app shows only when they apply.
+    this.tabs = [
+      { id: "ballot", tab: refs.tabBallot, panel: refs.ballotList },
+      { id: "events", tab: refs.tabEvents, panel: refs.eventsList },
+      ...(refs.extraTabs || []),
+    ];
+    for (const t of this.tabs) {
+      t.tab.addEventListener("click", () => {
+        this.showTab(t.id);
+        this.handlers.onTab?.(t.id);
+      });
+      // Arrow keys move between visible tabs (standard tab pattern).
+      t.tab.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        const visible = this.tabs.filter((x) => !x.tab.hidden);
+        const at = visible.indexOf(t);
+        const next = visible[(at + (e.key === "ArrowRight" ? 1 : visible.length - 1)) % visible.length];
+        this.showTab(next.id);
+        this.handlers.onTab?.(next.id);
+        next.tab.focus();
       });
     }
+    this.activeTab = "ballot";
   }
 
   // ===== Theme + mode =========================================================
@@ -203,13 +217,31 @@ export class UI {
   }
 
   showTab(which) {
-    const ballot = which === "ballot";
-    this.refs.tabBallot.setAttribute("aria-selected", String(ballot));
-    this.refs.tabEvents.setAttribute("aria-selected", String(!ballot));
-    this.refs.tabBallot.tabIndex = ballot ? 0 : -1;
-    this.refs.tabEvents.tabIndex = ballot ? -1 : 0;
-    this.refs.ballotList.hidden = !ballot;
-    this.refs.eventsList.hidden = ballot;
+    const target = this.tabs.find((t) => t.id === which && !t.tab.hidden) ? which : "ballot";
+    this.activeTab = target;
+    for (const t of this.tabs) {
+      const on = t.id === target;
+      t.tab.setAttribute("aria-selected", String(on));
+      t.tab.tabIndex = on ? 0 : -1;
+      t.panel.hidden = !on;
+    }
+  }
+  /** Show or hide a pilot tab; falls back to Ballot if the open tab disappears. */
+  setTabVisible(id, visible) {
+    const t = this.tabs.find((x) => x.id === id);
+    if (!t) return;
+    t.tab.hidden = !visible;
+    if (!visible) t.panel.hidden = true;
+    if (!visible && this.activeTab === id) this.showTab("ballot");
+  }
+  /** Small number on a tab (0 or null removes it). */
+  setTabCount(id, count) {
+    const t = this.tabs.find((x) => x.id === id);
+    const badge = t && t.tab.querySelector(".count");
+    if (badge) {
+      badge.textContent = String(count ?? 0);
+      badge.hidden = !count;
+    }
   }
 
   // ===== The layer dock =========================================================
@@ -296,7 +328,13 @@ export class UI {
   renderBallot(races, ctx) {
     const list = this.refs.ballotList;
     list.innerHTML = "";
-    this.refs.ballotCount.textContent = String(races.length);
+    const pilot = isPilot(ctx.stateCode);
+    const questions = ctx.questions || [];
+    this.refs.ballotCount.textContent = String(races.length + questions.length);
+    if (pilot) {
+      const banner = this._votingBanner();
+      if (banner) list.appendChild(banner);
+    }
 
     if (ctx.unincorporated && ctx.node.level === "city") {
       list.appendChild(
@@ -308,7 +346,13 @@ export class UI {
 
     // Honest coverage note: federal and statewide candidates are listed for the
     // whole country; local ones are not (no free national source).
-    if (ctx.node.level !== "country" && ctx.node.level !== "globe") {
+    if (pilot) {
+      list.appendChild(
+        noteBox(
+          `<strong>Your ballot, as complete as we can make it.</strong> This page lists who is in office, the candidates we could confirm from at least two public sources (checked Oct. 24, 2026) and the ballot questions. City, town and school committee candidates and most local questions are not listed, and write-in candidates never are. Your <a href="https://www.sec.state.ma.us/wheredoivotema/bal/myelectioninfo.aspx" target="_blank" rel="noopener noreferrer">official sample ballot</a> or your clerk has the final list.`
+        )
+      );
+    } else if (ctx.node.level !== "country" && ctx.node.level !== "globe") {
       const link = '<a href="https://ballotpedia.org/Sample_Ballot_Lookup" target="_blank" rel="noopener noreferrer">sample ballot lookup</a>';
       list.appendChild(
         noteBox(
@@ -321,6 +365,8 @@ export class UI {
     // belongs to. Always broad -> local.
     const kinds = new Set(ctx.stack.map((j) => j.kind));
     for (const r of races) kinds.add(r.kind);
+    for (const q of questions) kinds.add(q.kind);
+    for (const h of ctx.holders || []) kinds.add(h.kind);
     const ordered = KIND_ORDER.filter((k) => kinds.has(k));
 
     if (!ordered.length) {
@@ -333,6 +379,7 @@ export class UI {
       const members = ctx.stack.filter((j) => j.kind === kind);
       const items = races.filter((r) => r.kind === kind);
       const held = (ctx.holders || []).filter((h) => h.kind === kind);
+      const asked = questions.filter((q) => q.kind === kind);
 
       const sec = document.createElement("details");
       sec.className = "layer";
@@ -341,7 +388,10 @@ export class UI {
       sec.dataset.ids = members.map((j) => j.id).join(" ");
       // Start with just the layer you're looking at open; the rest stay as a
       // compact one-line overview of the whole stack.
-      sec.open = kind === ctx.openKind;
+      // In the pilot state every layer that has something to show starts open, so
+      // the national and state offices never seem to disappear when you drop
+      // down to a city. Elsewhere only the layer you are looking at is open.
+      sec.open = kind === ctx.openKind || (pilot && (held.length > 0 || items.length > 0 || asked.length > 0));
 
       const sum = document.createElement("summary");
       const ico = document.createElement("span");
@@ -359,9 +409,17 @@ export class UI {
       title.append(k, n);
       const count = document.createElement("span");
       count.className = "layer-count";
-      count.textContent = String(items.length);
-      count.title = `${items.length} ballot item${items.length === 1 ? "" : "s"}`;
-      sum.append(ico, title, count);
+      const total = items.length + asked.length;
+      count.textContent = String(total);
+      count.title = `${total} ballot item${total === 1 ? "" : "s"}`;
+      sum.append(ico, title);
+      if (pilot && held.length) {
+        const inOffice = document.createElement("span");
+        inOffice.className = "layer-held";
+        inOffice.textContent = `${held.length} in office`;
+        sum.appendChild(inOffice);
+      }
+      sum.append(count);
       sec.appendChild(sum);
 
       const body = document.createElement("div");
@@ -371,9 +429,15 @@ export class UI {
       blurb.textContent = meta.blurb;
       body.appendChild(blurb);
       if (held.length) body.appendChild(this._holders(held));
+      if (asked.length) {
+        body.appendChild(subheading("Questions on your ballot"));
+        for (const q of asked) body.appendChild(this._questionCard(q));
+      }
       if (items.length) {
-        if (held.length) body.appendChild(subheading("On the ballot"));
+        if (held.length || asked.length) body.appendChild(subheading("Candidates on your ballot"));
         for (const race of items) body.appendChild(this._raceCard(race));
+      } else if (asked.length) {
+        // Questions are shown above; nothing more to say for this layer.
       } else {
         const none = document.createElement("p");
         none.className = "layer-empty";
@@ -522,6 +586,7 @@ export class UI {
     if (race.candidates?.some((c) => c.slug && getCandidate(c.slug)?.researched)) {
       tags.appendChild(tag("Research profiles", "tag-real", null, "check"));
     }
+    if (race.uncontested) tags.appendChild(tag("Only one candidate listed", "tag-soft", null, "check"));
     if (tags.children.length) card.appendChild(tags);
 
     const office = document.createElement("h4");
@@ -579,7 +644,151 @@ export class UI {
       }
       card.appendChild(cands);
     }
+    if (race.source === "ma-ballot") card.appendChild(this._raceSources(race));
     return card;
+  }
+  // "Where this came from" for pilot races, so a voter can check it.
+  _raceSources(race) {
+    const box = document.createElement("details");
+    box.className = "card-sources";
+    const sum = document.createElement("summary");
+    sum.textContent = `Where this list comes from (${race.sources.length})`;
+    box.appendChild(sum);
+    const note = document.createElement("p");
+    note.className = "card-note";
+    note.textContent =
+      "Compared across public election records and news guides on Oct. 24, 2026. Write-in candidates are always allowed and are not listed. Your sample ballot is the final word." +
+      (race.note ? ` ${race.note}` : "");
+    box.appendChild(note);
+    const ul = document.createElement("ul");
+    for (const url of race.sources) {
+      if (!/^https?:\/\//i.test(url)) continue;
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      try {
+        a.textContent = new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        a.textContent = url;
+      }
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+    box.appendChild(ul);
+    return box;
+  }
+  // A ballot question, in plain words. Yes and No sit side by side.
+  _questionCard(q) {
+    const card = document.createElement("article");
+    card.className = "card question-card";
+    const tags = document.createElement("div");
+    tags.className = "tag-row";
+    tags.appendChild(tag(q.number ? `Question ${q.number}` : "District question", "tag-type", null, "measure"));
+    if (q.type === "public-policy") tags.appendChild(tag("Advisory only", "tag-soft"));
+    if (q.affectsVoting) tags.appendChild(tag("About voting", "tag-soft", null, "ballot"));
+    card.appendChild(tags);
+    const title = document.createElement("h4");
+    title.className = "card-title";
+    title.textContent = q.title;
+    card.appendChild(title);
+    const sum = document.createElement("p");
+    sum.className = "card-desc";
+    sum.textContent = q.summary;
+    card.appendChild(sum);
+    const grid = document.createElement("div");
+    grid.className = "yes-no";
+    for (const [cls, label, text] of [
+      ["yes", "Yes", q.yesVote],
+      ["no", "No", q.noVote],
+    ]) {
+      const cell = document.createElement("div");
+      cell.className = `yes-no-cell ${cls}`;
+      const strong = document.createElement("strong");
+      strong.textContent = `${label} vote`;
+      const p = document.createElement("p");
+      p.textContent = String(text || "").replace(/^A (YES|NO) vote would /i, "Would ");
+      cell.append(strong, p);
+      grid.appendChild(cell);
+    }
+    card.appendChild(grid);
+    if (q.whenEffective) {
+      const when = document.createElement("p");
+      when.className = "card-meta";
+      when.textContent = `If it passes: ${q.whenEffective}`;
+      card.appendChild(when);
+    }
+    const more = document.createElement("details");
+    more.className = "card-sources";
+    const msum = document.createElement("summary");
+    msum.textContent = "Arguments, cost and sources";
+    more.appendChild(msum);
+    if (q.fiscalNote) {
+      const f = document.createElement("p");
+      f.className = "card-note";
+      f.textContent = `Cost: ${q.fiscalNote}`;
+      more.appendChild(f);
+    }
+    for (const [label, list] of [
+      ["Supporters say", q.arguments && q.arguments.for],
+      ["Opponents say", q.arguments && q.arguments.against],
+    ]) {
+      for (const a of list || []) {
+        const p = document.createElement("p");
+        p.className = "card-note";
+        const b = document.createElement("strong");
+        b.textContent = `${label} (${a.by}): `;
+        p.append(b, document.createTextNode(a.text));
+        more.appendChild(p);
+      }
+    }
+    const ul = document.createElement("ul");
+    for (const s of q.sources || []) {
+      if (!/^https?:\/\//i.test(s.url)) continue;
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = s.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = s.label;
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+    more.appendChild(ul);
+    card.appendChild(more);
+    return card;
+  }
+  // Top of the Ballot tab in the pilot state: the next deadline and how many
+  // things about voting changed, with a way to the Voting info tab.
+  _votingBanner() {
+    const sum = votingSummary();
+    if (!sum.next && !sum.attention) return null;
+    const box = document.createElement("div");
+    box.className = "vote-banner";
+    box.setAttribute("role", "note");
+    const ico = document.createElement("span");
+    ico.className = "vote-banner-ico";
+    ico.setAttribute("aria-hidden", "true");
+    ico.innerHTML = icon("alert", { size: 20 });
+    const text = document.createElement("div");
+    const lead = document.createElement("strong");
+    lead.textContent = sum.next ? `${shortLabel(sum.next)}: ${formatDeadline(sum.next)}` : "Voting changes to know about";
+    const body = document.createElement("div");
+    body.textContent = sum.attention
+      ? `${sum.attention} things about voting changed or could still change.`
+      : "Check your voting options.";
+    text.append(lead, body);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-ghost vote-banner-btn";
+    btn.textContent = "See voting info";
+    btn.addEventListener("click", () => {
+      this.showTab("voting");
+      this.handlers.onTab?.("voting");
+    });
+    box.append(ico, text, btn);
+    return box;
   }
 
   // ===== Events ===============================================================
